@@ -50,3 +50,6 @@ quote-style = "double"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project.entry-points.pytest11]
+qapytest = "qapytest._plugin"
