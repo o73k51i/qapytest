@@ -37,3 +37,7 @@ ignore-decorators = ["typing.overload"]
 [tool.ruff.format]
 indent-style = "space"
 quote-style = "double"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
