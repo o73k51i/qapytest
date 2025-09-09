@@ -1,3 +1,5 @@
+"""Module for pytest plugin that generates HTML reports."""
+
 import datetime
 from collections import defaultdict
 from pathlib import Path
