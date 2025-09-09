@@ -136,7 +136,8 @@
                     e.stopPropagation();
                     const el = sel ? document.querySelector(sel) : null;
                     if (!el) return;
-                    const text = el.textContent || '';
+
+                    const text = formatTestDetails(el);
                     try {
                         await navigator.clipboard.writeText(text);
                         const prevHtml = btn.innerHTML;
@@ -146,6 +147,85 @@
                     } catch (_e) { }
                 });
             });
+        }
+
+        function formatTestDetails(gridElement) {
+            const lines = [];
+            const gridItems = qa('.k, .v', gridElement);
+
+            for (let i = 0; i < gridItems.length; i += 2) {
+                const key = gridItems[i];
+                const value = gridItems[i + 1];
+
+                if (!key || !value) continue;
+
+                const keyText = key.textContent.trim();
+                const valueElement = value;
+
+                if (keyText === 'Execution Log') {
+                    lines.push(`${keyText}:`);
+                    const logText = formatExecutionLog(valueElement);
+                    if (logText) {
+                        lines.push(logText);
+                    }
+                } else {
+                    const valueText = valueElement.textContent.trim();
+                    lines.push(`${keyText}: ${valueText}`);
+                }
+                lines.push('');
+            }
+
+            return lines.join('\n').trim();
+        }
+
+        function formatExecutionLog(logContainer) {
+            const lines = [];
+
+            function processLogItems(container, indent = '') {
+                const items = qa('li', container);
+                items.forEach(item => {
+                    const parentUl = item.parentElement;
+                    if (parentUl && parentUl !== container && parentUl.closest('li') && parentUl.closest('li').parentElement === container) {
+                        return;
+                    }
+
+                    const text = getDirectTextContent(item).trim();
+                    if (text) {
+                        lines.push(indent + text);
+                    }
+
+                    const nestedUl = qa('ul', item).find(ul => ul.parentElement === item);
+                    if (nestedUl) {
+                        processLogItems(nestedUl, indent + '  ');
+                    }
+                });
+            }
+
+            function getDirectTextContent(element) {
+                let text = '';
+                for (const node of element.childNodes) {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        text += node.textContent;
+                    } else if (node.nodeType === Node.ELEMENT_NODE) {
+                        if (node.tagName === 'STRONG' || node.tagName === 'CODE' || node.tagName === 'BUTTON') {
+                            text += node.textContent;
+                        }
+                        if (node.tagName !== 'UL') {
+                            if (!qa('ul', node).length) {
+                                text += node.textContent;
+                            }
+                        }
+                    }
+                }
+                return text;
+            }
+
+            const topLevelUl = qa('ul', logContainer)[0];
+            if (topLevelUl) {
+                processLogItems(topLevelUl);
+            }
+
+            return lines.join('\n');
         }
 
         function bindModalButtons() {
