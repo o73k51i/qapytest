@@ -1,7 +1,11 @@
 [project]
 name = "qapytest"
 version = "0.1.0"
-requires-python = ">=3.13"
+requires-python = ">=3.10,<3.14"
+license = {file = "LICENSE"}
+authors = [
+    { name = "o73k51i", email = "o73k51i@proton.me" }
+]
 dependencies = [
     "pytest>=8.4.2",
 ]
