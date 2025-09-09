@@ -7,6 +7,7 @@ authors = [
     { name = "o73k51i", email = "o73k51i@proton.me" }
 ]
 dependencies = [
+    "jinja2>=3.1.6",
     "pytest>=8.4.2",
     "python-dotenv>=1.1.1",
 ]
