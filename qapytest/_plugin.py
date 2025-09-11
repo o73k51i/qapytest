@@ -39,7 +39,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         dest="report_html",
         metavar="PATH",
         nargs="?",
-        const="qapytest_report.html",
+        const="report.html",
         default=None,
         help="Create a self-contained HTML report.",
     )
