@@ -181,26 +181,6 @@
         function formatExecutionLog(logContainer) {
             const lines = [];
 
-            function extractCleanText(element, isStep = false) {
-                if (isStep) {
-                    const textContent = element.textContent || '';
-                    const stepMatch = textContent.match(/Step:\s*(.+?)(?:\s*✔︎|$)/);
-                    return stepMatch ? stepMatch[1].trim() : textContent.replace(/^[✔︎✖︎]\s*Step:\s*/, '').trim();
-                } else {
-                    const labelElement = element.querySelector('.assert-label');
-                    if (labelElement) {
-                        let text = '';
-                        for (const node of labelElement.childNodes) {
-                            if (node.nodeType === Node.TEXT_NODE) {
-                                text += node.textContent;
-                            }
-                        }
-                        return text.replace(/^[✔︎✖︎\s]+/, '').trim();
-                    }
-                    return '';
-                }
-            }
-
             function processLogItems(container, indent = '') {
                 const items = qa('li', container);
                 items.forEach(item => {
@@ -213,28 +193,47 @@
 
                     if (item.classList.contains('step-passed') || item.classList.contains('step-failed')) {
                         const stepIcon = item.classList.contains('step-passed') ? '✔︎' : '✖︎';
-                        const cleanText = extractCleanText(item, true);
-                        text = `${stepIcon} ${cleanText}`;
+
+                        const strongElement = item.querySelector('strong');
+                        if (strongElement && strongElement.nextSibling) {
+                            const stepText = strongElement.nextSibling.textContent?.trim() || '';
+                            text = `${stepIcon} ${stepText}`;
+                        } else {
+                            const fullText = item.textContent || '';
+                            const cleaned = fullText.replace(/^[✔︎✖︎]\s*Step:\s*/, '').replace(/\s*[✔︎✖︎].*$/, '').trim();
+                            const lines = cleaned.split('\n').filter(line => line.trim());
+                            text = `${stepIcon} ${lines[0] || ''}`;
+                        }
                     }
                     else if (item.classList.contains('assert-passed') || item.classList.contains('assert-failed')) {
                         const assertIcon = item.classList.contains('assert-passed') ? '✔︎' : '✖︎';
-                        const cleanText = extractCleanText(item, false);
-                        text = `${assertIcon} ${cleanText}`;
+                        const assertLabel = item.querySelector('.assert-label');
 
-                        const detailsDiv = item.querySelector('.assert-details');
-                        if (detailsDiv) {
-                            const detailsContent = detailsDiv.querySelector('.details-content');
-                            if (detailsContent) {
-                                const detailLines = Array.from(detailsContent.children)
-                                    .map(child => child.textContent.trim())
-                                    .filter(line => line)
-                                    .join(' ');
-                                if (detailLines) {
-                                    const maxLength = 150;
-                                    const truncatedDetails = detailLines.length > maxLength
-                                        ? detailLines.substring(0, maxLength) + '...'
-                                        : detailLines;
-                                    text += ` (${truncatedDetails})`;
+                        if (assertLabel) {
+                            let labelText = '';
+                            for (const node of assertLabel.childNodes) {
+                                if (node.nodeType === Node.TEXT_NODE) {
+                                    labelText += node.textContent;
+                                }
+                            }
+                            labelText = labelText.replace(/^[✔︎✖︎\s]*/, '').trim();
+                            text = `${assertIcon} ${labelText}`;
+
+                            const detailsDiv = item.querySelector('.assert-details');
+                            if (detailsDiv) {
+                                const detailsContent = detailsDiv.querySelector('.details-content');
+                                if (detailsContent) {
+                                    const detailLines = Array.from(detailsContent.children)
+                                        .map(child => child.textContent.trim())
+                                        .filter(line => line)
+                                        .join(' ');
+                                    if (detailLines) {
+                                        const maxLength = 150;
+                                        const truncatedDetails = detailLines.length > maxLength
+                                            ? detailLines.substring(0, maxLength) + '...'
+                                            : detailLines;
+                                        text += ` (${truncatedDetails})`;
+                                    }
                                 }
                             }
                         }
