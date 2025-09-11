@@ -135,12 +135,13 @@ def pytest_runtest_makereport(item: pytest.Item, call: cfg.AnyType) -> Generator
 
         if report.when == "call" and report.outcome == "passed" and utils.has_failures_in_log(report.execution_log):
             report._softfailed = True  # type: ignore[attr-defined]  # noqa: SLF001
+            report._soft_assert_only = True  # type: ignore[attr-defined]  # noqa: SLF001  # Marker for soft assertion failures
             if getattr(report, "wasxfail", None):
                 report.outcome = "skipped"
             else:
                 report.outcome = "failed"
 
-            header = "One or more assertions failed."
+            header = "Soft assertion(s) failed. See details below."
             error_summary_lines = utils.generate_terminal_summary(report.execution_log)  # type: ignore[attr-defined]
             full_summary = [header, *error_summary_lines]
             report.longrepr = "\n".join(full_summary)
