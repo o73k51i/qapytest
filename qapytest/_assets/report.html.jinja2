@@ -77,7 +77,7 @@
                                 {% if result.execution_log %}
                                 <div class="k">Execution Log</div><div class="v mono">
                                     {% import '_log_tree.html.jinja2' as log_helpers %}
-                                    {{ log_helpers.render_log_tree(result.execution_log, test_index) }}
+                                    {{ log_helpers.render_log_tree(result.execution_log, test_index, {'value': 0}, {'value': 0}) }}
                                 </div>
                                 {% endif %}
                                 {% if result.details.longrepr and not result.get('soft_assert_only', False) %}
