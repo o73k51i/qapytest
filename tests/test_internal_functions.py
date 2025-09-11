@@ -208,6 +208,19 @@ class TestLogUtilities:
         summary = utils.generate_terminal_summary(log_no_failures)
         assert len(summary) == 0
 
+    def test_generate_terminal_summary_without_details(self):
+        """Test generating terminal summary with failures without details."""
+        log_with_failures_no_details = [
+            {"type": "assert", "passed": False, "label": "Failed assertion without details"},
+            {"type": "assert", "passed": False, "label": "Another failure", "details": "With details"},
+        ]
+
+        summary = utils.generate_terminal_summary(log_with_failures_no_details)
+
+        assert len(summary) == 2
+        assert summary[0] == "\t✖︎ Failed assertion without details"
+        assert summary[1] == "\t✖︎ Another failure [With details]"
+
 
 class TestTextUtilities:
     """Tests for text processing utilities."""
