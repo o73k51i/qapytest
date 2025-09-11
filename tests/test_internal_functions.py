@@ -301,7 +301,7 @@ class TestReportUtilities:
 
         longrepr_str = "One or more assertions failed.\nDetails..."
         message = utils._assert_message_from_longrepr(longrepr_str)  # noqa: SLF001
-        assert message == "Soft assertion(s) failed. See details below."
+        assert message == "One or more assertions failed"
 
         message = utils._assert_message_from_longrepr(None)  # noqa: SLF001
         assert message == ""
