@@ -366,6 +366,47 @@ html[data-theme=dark] .theme-toggle .icon-dark {
     color: var(--failed-text)
 }
 
+.assert-label.clickable {
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 2px;
+}
+
+.assert-label.clickable:hover {
+    text-decoration-style: solid;
+}
+
+.details-icon {
+    font-size: 11px;
+    opacity: 0.7;
+    margin-left: 4px;
+    transition: opacity 0.2s ease;
+}
+
+.assert-label.clickable:hover .details-icon {
+    opacity: 1;
+}
+
+.assert-details {
+    margin-top: 4px;
+    margin-left: 16px;
+    padding: 6px 10px;
+    background: var(--glass-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.assert-details .details-content {
+    color: var(--muted);
+}
+
+.assert-details .details-content div {
+    margin: 2px 0;
+}
+
 .small {
     font-size: 12px;
     color: var(--muted)

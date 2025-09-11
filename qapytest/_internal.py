@@ -88,8 +88,11 @@ def generate_terminal_summary(log_list: list) -> list[str]:
         for entry in log_entries:
             if entry.get("type") == "assert" and not entry.get("passed", False):
                 label = entry.get("label", "")
-                details = entry.get("details", "")
-                error_lines.append(f"\t✖︎ {label} [{details}]")
+                details = entry.get("details")
+                if details:
+                    error_lines.append(f"\t✖︎ {label} [{details}]")
+                else:
+                    error_lines.append(f"\t✖︎ {label}")
             elif entry.get("type") == "step":
                 find_failures_recursive(entry.get("children", []))
 

@@ -262,9 +262,32 @@
             }
         });
 
+        function bindAssertToggles() {
+            qa('[data-toggle-target]').forEach(element => {
+                element.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const targetSelector = element.dataset.toggleTarget;
+                    const target = document.querySelector(targetSelector);
+                    if (target) {
+                        const isHidden = target.style.display === 'none' || !target.style.display;
+                        target.style.display = isHidden ? 'block' : 'none';
+                    }
+                });
+                
+                element.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        element.click();
+                    }
+                });
+            });
+        }
+
         updateCardStyles();
         bindCopyButtons();
         bindModalButtons();
+        bindAssertToggles();
     }
 
     if (document.readyState === 'loading') {

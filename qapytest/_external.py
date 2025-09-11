@@ -32,12 +32,12 @@ def step(message: str) -> Generator[None, None, None]:
         step_node["passed"] = not utils.has_failures_in_log(step_node.get("children", []))
 
 
-def soft_assert(condition: bool, label: str, details: str | None = None) -> bool:
+def soft_assert(condition: bool, label: str, details: str | list[str] | None = None) -> bool:
     passed = bool(condition)
     log_entry: dict[str, cfg.AnyType] = {"type": "assert", "label": label, "passed": passed}
 
-    if not passed:
-        log_entry["details"] = details if details else "Condition evaluated to False"
+    if details is not None:
+        log_entry["details"] = details
 
     utils.add_log_entry(log_entry)
     return passed
