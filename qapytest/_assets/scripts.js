@@ -181,6 +181,26 @@
         function formatExecutionLog(logContainer) {
             const lines = [];
 
+            function extractCleanText(element, isStep = false) {
+                if (isStep) {
+                    const textContent = element.textContent || '';
+                    const stepMatch = textContent.match(/Step:\s*(.+?)(?:\s*✔︎|$)/);
+                    return stepMatch ? stepMatch[1].trim() : textContent.replace(/^[✔︎✖︎]\s*Step:\s*/, '').trim();
+                } else {
+                    const labelElement = element.querySelector('.assert-label');
+                    if (labelElement) {
+                        let text = '';
+                        for (const node of labelElement.childNodes) {
+                            if (node.nodeType === Node.TEXT_NODE) {
+                                text += node.textContent;
+                            }
+                        }
+                        return text.replace(/^[✔︎✖︎\s]+/, '').trim();
+                    }
+                    return '';
+                }
+            }
+
             function processLogItems(container, indent = '') {
                 const items = qa('li', container);
                 items.forEach(item => {
@@ -189,35 +209,50 @@
                         return;
                     }
 
-                    const text = getDirectTextContent(item).trim();
+                    let text = '';
+
+                    if (item.classList.contains('step-passed') || item.classList.contains('step-failed')) {
+                        const stepIcon = item.classList.contains('step-passed') ? '✔︎' : '✖︎';
+                        const cleanText = extractCleanText(item, true);
+                        text = `${stepIcon} ${cleanText}`;
+                    }
+                    else if (item.classList.contains('assert-passed') || item.classList.contains('assert-failed')) {
+                        const assertIcon = item.classList.contains('assert-passed') ? '✔︎' : '✖︎';
+                        const cleanText = extractCleanText(item, false);
+                        text = `${assertIcon} ${cleanText}`;
+
+                        const detailsDiv = item.querySelector('.assert-details');
+                        if (detailsDiv) {
+                            const detailsContent = detailsDiv.querySelector('.details-content');
+                            if (detailsContent) {
+                                const detailLines = Array.from(detailsContent.children)
+                                    .map(child => child.textContent.trim())
+                                    .filter(line => line)
+                                    .join(' ');
+                                if (detailLines) {
+                                    const maxLength = 150;
+                                    const truncatedDetails = detailLines.length > maxLength
+                                        ? detailLines.substring(0, maxLength) + '...'
+                                        : detailLines;
+                                    text += ` (${truncatedDetails})`;
+                                }
+                            }
+                        }
+                    }
+
                     if (text) {
-                        lines.push(indent + text);
+                        const maxIndentLevel = 3;
+                        const currentIndentLevel = indent.length / 2;
+                        const actualIndent = currentIndentLevel <= maxIndentLevel ? indent : '      ';
+                        lines.push(actualIndent + text);
                     }
 
                     const nestedUl = qa('ul', item).find(ul => ul.parentElement === item);
                     if (nestedUl) {
-                        processLogItems(nestedUl, indent + '  ');
+                        const nextIndent = indent.length < 6 ? indent + '  ' : indent;
+                        processLogItems(nestedUl, nextIndent);
                     }
                 });
-            }
-
-            function getDirectTextContent(element) {
-                let text = '';
-                for (const node of element.childNodes) {
-                    if (node.nodeType === Node.TEXT_NODE) {
-                        text += node.textContent;
-                    } else if (node.nodeType === Node.ELEMENT_NODE) {
-                        if (node.tagName === 'STRONG' || node.tagName === 'CODE' || node.tagName === 'BUTTON') {
-                            text += node.textContent;
-                        }
-                        if (node.tagName !== 'UL') {
-                            if (!qa('ul', node).length) {
-                                text += node.textContent;
-                            }
-                        }
-                    }
-                }
-                return text;
             }
 
             const topLevelUl = qa('ul', logContainer)[0];
@@ -273,7 +308,7 @@
                         target.style.display = isHidden ? 'block' : 'none';
                     }
                 });
-                
+
                 element.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
