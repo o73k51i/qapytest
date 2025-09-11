@@ -45,7 +45,7 @@ class TestSoftAssertFunction:
             assert assert_entry["type"] == "assert"
             assert assert_entry["label"] == "Should fail"
             assert assert_entry["passed"] is False
-            assert assert_entry["details"] == "Condition evaluated to False"
+            assert "details" not in assert_entry
 
     def test_soft_assert_fail_with_custom_details(self):
         """Test soft_assert with failing condition and custom details."""
