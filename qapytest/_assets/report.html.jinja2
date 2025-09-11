@@ -80,7 +80,7 @@
                                     {{ log_helpers.render_log_tree(result.execution_log, test_index) }}
                                 </div>
                                 {% endif %}
-                                {% if result.details.longrepr %}
+                                {% if result.details.longrepr and not result.get('soft_assert_only', False) %}
                                 <div class="k">Details</div><div class="v"><pre class="mono">{{ result.details.longrepr|e }}</pre></div>
                                 {% endif %}
                                 {% if result.details.captured_stdout %}
