@@ -64,6 +64,9 @@ class HtmlReportPlugin:
             elif key == "execution_log":
                 record["execution_log"] = value
 
+        if getattr(report, "_soft_assert_only", False):
+            record["soft_assert_only"] = True
+
         effective_outcome = utils.get_effective_outcome(report)
 
         if report.when == "call":
