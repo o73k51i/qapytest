@@ -121,6 +121,14 @@ def _assert_message_from_longrepr(longrepr: cfg.AnyType) -> str:
     if not longrepr:
         return ""
     try:
+        text = str(longrepr)
+        text = _strip_ansi_codes(text)  # Strip ANSI codes
+        if "One or more assertions failed." in text:
+            return "One or more assertions failed"
+    except Exception:  # noqa: S110
+        pass
+
+    try:
         if hasattr(longrepr, "reprcrash") and getattr(
             longrepr.reprcrash,
             "message",
@@ -137,8 +145,6 @@ def _assert_message_from_longrepr(longrepr: cfg.AnyType) -> str:
     try:
         text = str(longrepr)
         text = _strip_ansi_codes(text)  # Strip ANSI codes
-        if "One or more assertions failed." in text:
-            return "Soft assertion(s) failed. See details below."
         for line in text.splitlines():
             if "AssertionError:" in line:
                 return line.split("AssertionError:", 1)[1].strip() or ""

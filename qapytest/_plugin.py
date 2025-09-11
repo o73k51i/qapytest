@@ -141,7 +141,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: cfg.AnyType) -> Generator
             else:
                 report.outcome = "failed"
 
-            header = "Soft assertion(s) failed. See details below."
+            header = "One or more assertions failed."
             error_summary_lines = utils.generate_terminal_summary(report.execution_log)  # type: ignore[attr-defined]
             full_summary = [header, *error_summary_lines]
             report.longrepr = "\n".join(full_summary)
