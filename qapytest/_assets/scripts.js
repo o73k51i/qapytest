@@ -11,7 +11,7 @@
     }
 
     function setupTheme() {
-        const savedTheme = localStorage.getItem('report-theme');
+        const savedTheme = sessionStorage.getItem('report-theme');
         if (savedTheme) {
             applyTheme(savedTheme);
         } else {
@@ -23,14 +23,14 @@
             themeToggle.addEventListener('click', () => {
                 const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
                 const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                localStorage.setItem('report-theme', newTheme);
+                sessionStorage.setItem('report-theme', newTheme);
                 applyTheme(newTheme);
             });
         }
 
         try {
             window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-                const saved = localStorage.getItem('report-theme');
+                const saved = sessionStorage.getItem('report-theme');
                 if (!saved || saved === 'auto') {
                     applyTheme('auto');
                 }
