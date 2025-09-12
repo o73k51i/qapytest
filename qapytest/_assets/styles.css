@@ -341,7 +341,10 @@ html[data-theme=dark] .theme-toggle .icon-dark {
 }
 
 .details .v {
-    font-size: 13px
+    font-size: 13px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    overflow-x: auto
 }
 
 .details .v ul {
@@ -541,4 +544,13 @@ html[data-theme=dark] .theme-toggle .icon-dark {
     max-width: 100%;
     height: auto;
     display: block
+}
+
+/* Styles for details block content to fit within allocated space */
+.details .v pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    overflow-x: auto;
+    max-width: 100%
 }
