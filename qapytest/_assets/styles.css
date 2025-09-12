@@ -554,3 +554,96 @@ html[data-theme=dark] .theme-toggle .icon-dark {
     overflow-x: auto;
     max-width: 100%
 }
+
+/* Logs table styling */
+.logs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.logs-table td {
+    padding: 6px 10px;
+    vertical-align: top;
+    border: none;
+}
+
+.logs-table .log-level {
+    width: 70px;
+    font-weight: 600;
+    text-align: center;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-size: 10px;
+}
+
+.logs-table .log-logger {
+    width: 150px;
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.logs-table .log-message {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-size: 12px;
+    max-width: 0; /* Forces the cell to take remaining space */
+    width: 100%;
+}
+
+/* Log level colors */
+.log-level.DEBUG {
+    background: rgba(142, 142, 147, 0.15);
+    color: var(--muted);
+}
+
+.log-level.INFO {
+    background: rgba(0, 122, 255, 0.15);
+    color: var(--accent);
+}
+
+.log-level.WARNING {
+    background: rgba(255, 149, 0, 0.15);
+    color: var(--error-text);
+}
+
+.log-level.ERROR {
+    background: rgba(255, 69, 58, 0.22);
+    color: var(--failed-text);
+}
+
+.log-level.CRITICAL {
+    background: rgba(175, 82, 222, 0.22);
+    color: var(--xfailed-text);
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .log-level.DEBUG {
+    background: rgba(142, 142, 147, 0.22);
+    color: var(--muted);
+}
+
+[data-theme="dark"] .log-level.INFO {
+    background: rgba(100, 210, 255, 0.22);
+    color: var(--xpassed-text);
+}
+
+[data-theme="dark"] .log-level.WARNING {
+    background: rgba(255, 159, 10, 0.22);
+    color: var(--error-text);
+}
+
+[data-theme="dark"] .log-level.ERROR {
+    background: rgba(255, 69, 58, 0.22);
+    color: var(--failed-text);
+}
+
+[data-theme="dark"] .log-level.CRITICAL {
+    background: rgba(191, 90, 242, 0.22);
+    color: var(--xfailed-text);
+}
