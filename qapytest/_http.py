@@ -46,13 +46,16 @@ class HttpClient(Client):
     ```
     """
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, base_url: str = "", verify: bool = True, timeout: float = 10.0, **kwargs) -> None:
         """Constructor for HttpClient.
 
         Args:
+            base_url: Base URL for all requests. Default is an empty string.
+            verify: Whether to verify SSL certificates. Default is True.
+            timeout: Overall timeout for requests in seconds. Default is 10.0 seconds
             **kwargs: Standard arguments for the `httpx.Client` constructor.
         """
-        super().__init__(**kwargs)
+        super().__init__(base_url=base_url, verify=verify, timeout=timeout, **kwargs)
         logging.getLogger("httpx").setLevel(logging.WARNING)
         logging.getLogger("httpcore").setLevel(logging.WARNING)
         self._logger = logging.getLogger("HttpClient")
