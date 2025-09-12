@@ -2,12 +2,44 @@
 
 import base64
 import json
+import logging
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 
+from httpx import Client, Response
+
 from qapytest import _config as cfg
 from qapytest import _internal as utils
+
+step_logger = logging.getLogger("StepLogger")
+soft_assert_logger = logging.getLogger("SoftAssertLogger")
+
+
+class HttpClient(Client):
+    """Custom HTTP client that extends the functionality of the base `Client` class.
+
+    This client logs detailed information about HTTP requests and responses
+    for debugging purposes.
+    """
+
+    def __init__(self, **kwargs) -> None:
+        """Constructor for HttpClient."""
+        super().__init__(**kwargs)
+        logging.getLogger("httpx").setLevel(logging.WARNING)
+        logging.getLogger("httpcore").setLevel(logging.WARNING)
+        self.logger = logging.getLogger("HttpClient")
+
+    def request(self, *args, **kwargs) -> Response:
+        """Basic request method that logs request and response details."""
+        response = super().request(*args, **kwargs)
+        self.logger.info(f"Request made to {response.url}")
+        self.logger.debug(f"Request headers: {dict(response.request.headers)}")
+        self.logger.debug(f"Request body: {response.request.content}")
+        self.logger.info(f"Response status code: {response.status_code} and time: {response.elapsed.total_seconds()} s")
+        self.logger.debug(f"Response headers: {dict(response.headers)}")
+        self.logger.debug(f"Response body: {response.text}")
+        return response
 
 
 @contextmanager
