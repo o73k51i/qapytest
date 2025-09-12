@@ -1,10 +1,11 @@
 """Module for convenient interaction with SQL databases using SQLAlchemy."""
 
 import logging
-from typing import Any
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
+
+from qapytest import _config as cfg
 
 
 class SqlClient:
@@ -100,7 +101,11 @@ class SqlClient:
             self._logger.error(f"Failed to establish connection to the database: {e}")
             raise
 
-    def fetch_data(self, query: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]] | None:
+    def fetch_data(
+        self,
+        query: str,
+        params: dict[str, cfg.AnyType] | None = None,
+    ) -> list[dict[cfg.AnyType, cfg.AnyType]]:
         """Executes a raw SQL query (SELECT) and returns the result as a list of dictionaries.
 
         Args:
@@ -110,7 +115,9 @@ class SqlClient:
         Returns:
             A list of dictionaries, where each dictionary represents a row of the result, or None in case of an error.
         """
-        self._logger.info(f"Executing query: {query[:200]}...")
+        self._logger.info(f"Executing query: {query}")
+        if params:
+            self._logger.debug(f"With parameters: {params}")
         try:
             with self.engine.connect() as connection:
                 result = connection.execute(text(query), params or {})
@@ -120,9 +127,9 @@ class SqlClient:
                 return data
         except SQLAlchemyError as e:
             self._logger.error(f"Error while executing query: {e}")
-            return None
+            return []
 
-    def execute_and_commit(self, query: str, params: dict[str, Any] | None = None) -> bool:
+    def execute_and_commit(self, query: str, params: dict[str, cfg.AnyType] | None = None) -> bool:
         """Executes a raw SQL query for data modification (INSERT, UPDATE, DELETE) and commits the transaction.
 
         Args:
@@ -132,7 +139,9 @@ class SqlClient:
         Returns:
             True if the query was executed and the transaction was committed successfully, otherwise — False.
         """
-        self._logger.info(f"Executing query: {query[:200]}...")
+        self._logger.info(f"Executing query: {query}")
+        if params:
+            self._logger.debug(f"With parameters: {params}")
         try:
             with self.engine.begin() as connection:
                 connection.execute(text(query), params or {})
