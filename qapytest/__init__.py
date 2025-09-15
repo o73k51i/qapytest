@@ -6,12 +6,14 @@ structuring them with steps, and generating informative interactive HTML reports
 
 from qapytest._attach import attach
 from qapytest._http import HttpClient
+from qapytest._redis import RedisClient
 from qapytest._soft_assert import soft_assert
 from qapytest._sql import SqlClient
 from qapytest._step import step
 
 __all__ = [
     "HttpClient",
+    "RedisClient",
     "SqlClient",
     "attach",
     "soft_assert",
