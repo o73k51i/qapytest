@@ -270,8 +270,7 @@
                     if (modal) {
                         modal.hidden = false;
                         document.body.style.overflow = 'hidden';
-                        
-                        // Format logs as table if this is a logs modal
+
                         const modalBody = modal.querySelector('.modal-body');
                         const preElement = modalBody.querySelector('pre code');
                         if (preElement && modal.id.includes('logs-modal')) {
@@ -296,13 +295,12 @@
         function formatLogsAsTable(codeElement) {
             const logText = codeElement.textContent;
             const lines = logText.split('\n');
-            
+
             if (lines.length === 0) return;
-            
-            // Create table
+
             const table = document.createElement('table');
             table.className = 'logs-table';
-            
+
             let i = 0;
             while (i < lines.length) {
                 const line = lines[i].trim();
@@ -310,16 +308,14 @@
                     i++;
                     continue;
                 }
-                
+
                 const row = document.createElement('tr');
-                
-                // Parse log line - format: "LEVEL    LoggerName:file.py:line message"
+
                 const logMatch = line.match(/^(DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL|FATAL)\s+(.+?):(.+?):(\d+)\s+(.*)$/i);
-                
+
                 if (logMatch) {
                     const [, level, logger, file, lineNum, message] = logMatch;
-                    
-                    // Collect all continuation lines (lines that don't start with a log level)
+
                     let fullMessage = message;
                     let j = i + 1;
                     while (j < lines.length) {
@@ -328,82 +324,70 @@
                             j++;
                             continue;
                         }
-                        
-                        // Check if next line is a new log entry
+
                         const nextLogMatch = nextLine.match(/^(DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL|FATAL)\s+/i);
                         if (nextLogMatch) {
                             break;
                         }
-                        
-                        // Add continuation line to message
+
                         fullMessage += '\n' + lines[j];
                         j++;
                     }
-                    
-                    // Level cell
+
                     const levelCell = document.createElement('td');
                     levelCell.className = `log-level ${level.toUpperCase()}`;
                     levelCell.textContent = level.toUpperCase();
                     row.appendChild(levelCell);
-                    
-                    // Logger cell
+
                     const loggerCell = document.createElement('td');
                     loggerCell.className = 'log-logger';
                     loggerCell.textContent = logger;
                     loggerCell.title = `${logger}:${file}:${lineNum}`;
                     row.appendChild(loggerCell);
-                    
-                    // Message cell - preserve formatting for multiline
+
                     const messageCell = document.createElement('td');
                     messageCell.className = 'log-message';
-                    
-                    // If message contains newlines, use pre-wrap to preserve formatting
+
                     if (fullMessage.includes('\n')) {
                         messageCell.style.whiteSpace = 'pre-wrap';
                         messageCell.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
                     }
-                    
+
                     messageCell.textContent = fullMessage;
                     row.appendChild(messageCell);
-                    
-                    i = j; // Move to the next unprocessed line
+
+                    i = j;
                 } else {
-                    // If line doesn't match standard format, try simpler pattern
                     const simpleMatch = line.match(/^(DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL|FATAL)\s+(.*)$/i);
-                    
+
                     if (simpleMatch) {
                         const [, level, rest] = simpleMatch;
-                        
-                        // Level cell
+
                         const levelCell = document.createElement('td');
                         levelCell.className = `log-level ${level.toUpperCase()}`;
                         levelCell.textContent = level.toUpperCase();
                         row.appendChild(levelCell);
-                        
-                        // Empty logger cell
+
                         const loggerCell = document.createElement('td');
                         loggerCell.className = 'log-logger';
                         loggerCell.textContent = '';
                         row.appendChild(loggerCell);
-                        
-                        // Message cell
+
                         const messageCell = document.createElement('td');
                         messageCell.className = 'log-message';
                         messageCell.textContent = rest;
                         row.appendChild(messageCell);
-                        
+
                         i++;
                     } else {
-                        // Skip unrecognized lines or treat as continuation
                         i++;
                         continue;
                     }
                 }
-                
+
                 table.appendChild(row);
             }
-            
-            // Replace the pre element with the table
+
             const preElement = codeElement.parentElement;
             preElement.parentElement.replaceChild(table, preElement);
         }
