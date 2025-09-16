@@ -6,6 +6,7 @@ structuring them with steps, and generating informative interactive HTML reports
 
 from qapytest._attach import attach
 from qapytest._http import HttpClient
+from qapytest._json_validation import validate_json
 from qapytest._redis import RedisClient
 from qapytest._soft_assert import soft_assert
 from qapytest._sql import SqlClient
@@ -18,4 +19,5 @@ __all__ = [
     "attach",
     "soft_assert",
     "step",
+    "validate_json",
 ]
