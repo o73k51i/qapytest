@@ -1,4 +1,4 @@
-"""Tests for qapytest markers: title() and component()."""
+"""Tests for QaPyTest markers: title() and component()."""
 
 import tempfile
 from unittest.mock import Mock

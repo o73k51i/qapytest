@@ -1,4 +1,4 @@
-"""Module for testing the attach function in qapytest."""
+"""Module for testing the attach function in QaPyTest."""
 
 import json
 import tempfile

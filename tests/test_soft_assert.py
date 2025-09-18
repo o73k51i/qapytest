@@ -1,4 +1,4 @@
-"""Module containing tests for the soft_assert function in qapytest."""
+"""Module containing tests for the soft_assert function in QaPyTest."""
 
 from unittest.mock import patch
 

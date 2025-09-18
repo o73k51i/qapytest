@@ -1,4 +1,4 @@
-"""Tests for RedisClient in qapytest."""
+"""Tests for RedisClient in QaPyTest."""
 
 import json
 from unittest.mock import MagicMock, patch

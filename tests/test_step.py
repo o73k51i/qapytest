@@ -1,4 +1,4 @@
-"""Module containing tests for the step context manager in qapytest."""
+"""Module containing tests for the step context manager in QaPyTest."""
 
 from unittest.mock import patch
 

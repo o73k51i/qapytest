@@ -1,4 +1,4 @@
-"""Tests for HttpClient in qapytest."""
+"""Tests for HttpClient in QaPyTest."""
 
 import logging
 from unittest.mock import MagicMock, patch

@@ -1,4 +1,4 @@
-"""Tests for GraphQLClient in qapytest."""
+"""Tests for GraphQLClient in QaPyTest."""
 
 from unittest.mock import MagicMock, patch
 

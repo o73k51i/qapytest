@@ -1,4 +1,4 @@
-"""Module for testing internal utility functions in qapytest."""
+"""Module for testing internal utility functions in QaPyTest."""
 
 import datetime
 import os
