@@ -5,7 +5,7 @@ from time import sleep
 
 import pytest
 
-from qapytest import attach, soft_assert, step
+from qapytest import GraphQLClient, HttpClient, SqlClient, attach, soft_assert, step
 
 
 @pytest.mark.component("demo")
@@ -150,3 +150,54 @@ class TestDemo:
         logging.debug("This is a debug message")
         logging.warning("This is a warning message")
         logging.error("This is an error message")
+
+
+@pytest.mark.component("clients")
+class TestDemoClients:
+    """Demo test cases for various client scenarios."""
+
+    @pytest.mark.title("HTTP Client")
+    @pytest.mark.component("http_client")
+    def test_http_client(self) -> None:
+        """Test case demonstrating HTTP client usage."""
+        with step("Creating HTTP client"):
+            client = HttpClient(base_url="https://jsonplaceholder.typicode.com")
+        with step("Making GET request to /posts/1"):
+            response = client.get("/posts/1")
+        with step("Verifying response"):
+            attach(response.json(), "Response body")
+            soft_assert(response.status_code == 200, "Check status code")
+
+    @pytest.mark.title("GraphQL Client")
+    @pytest.mark.component("graphql_client")
+    def test_graphql_client(self) -> None:
+        """Test case demonstrating GraphQL client usage."""
+        with step("Creating GraphQL client"):
+            client = GraphQLClient(endpoint_url="https://graphqlzero.almansi.me/api")
+        with step("Executing sample query"):
+            query = """
+            query {
+                post(id: 1) {
+                    id
+                    title
+                    body
+                }
+            }
+            """
+            response = client.execute(query, {})
+        with step("Verifying response"):
+            attach(response.json(), "Response body")
+            soft_assert("data" in response.json(), "Check if 'data' is present in response")
+
+    @pytest.mark.title("SQL Client")
+    @pytest.mark.component("sql_client")
+    def test_sql_client(self) -> None:
+        """Test case demonstrating SQL client usage."""
+        with step("Creating SQL client"):
+            connection_string = "sqlite:///:memory:"
+            client = SqlClient(connection_string)
+        with step("Selecting data"):
+            result = client.fetch_data("SELECT 1 AS number")
+        with step("Verifying result"):
+            attach(result, "Query result")
+            soft_assert(result == [{"number": 1}], "Check query result")
