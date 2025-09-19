@@ -1,10 +1,26 @@
 [project]
 name = "qapytest"
 version = "0.1.0"
+description = "A powerful testing framework based on pytest, specifically designed for QA engineers"
+readme = "README.md"
 requires-python = ">=3.10,<3.14"
 license = {file = "LICENSE"}
 authors = [
     { name = "o73k51i", email = "o73k51i@proton.me" }
+]
+keywords = ["testing", "pytest", "qa", "automation", "http", "sql", "redis", "graphql", "test", "soft-assert"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Quality Assurance",
+    "Framework :: Pytest",
 ]
 dependencies = [
     "httpx>=0.28.1",
@@ -15,6 +31,12 @@ dependencies = [
     "redis>=6.4.0",
     "sqlalchemy>=2.0.43",
 ]
+
+[project.urls]
+Homepage = "https://github.com/o73k51i/qapytest"
+Repository = "https://github.com/o73k51i/qapytest"
+Documentation = "https://github.com/o73k51i/qapytest/blob/main/README.md"
+"Bug Reports" = "https://github.com/o73k51i/qapytest/issues"
 
 [dependency-groups]
 dev = [
