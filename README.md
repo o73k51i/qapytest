@@ -1,5 +1,11 @@
 # QaPyTest
 
+[![PyPI version](https://img.shields.io/pypi/v/qapytest.svg)](https://pypi.org/project/qapytest/)
+[![Python versions](https://img.shields.io/pypi/pyversions/qapytest.svg)](https://pypi.org/project/qapytest/)
+[![License](https://img.shields.io/github/license/o73k51i/qapytest.svg)](https://github.com/o73k51i/qapytest/blob/main/LICENSE)
+[![Downloads](https://img.shields.io/pypi/dm/qapytest.svg)](https://pypi.org/project/qapytest/)
+[![GitHub stars](https://img.shields.io/github/stars/o73k51i/qapytest.svg?style=social)](https://github.com/o73k51i/qapytest)
+
 `QaPyTest` — a powerful testing framework based on pytest, specifically designed for QA engineers.
 Turn your ordinary tests into detailed, structured reports with built-in HTTP, SQL, Redis and GraphQL clients.
 
