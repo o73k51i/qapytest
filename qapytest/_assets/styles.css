@@ -1,0 +1,649 @@
+:root {
+    --bg: #f0f2f5;
+    --bg2: #e5e9f0;
+    --glass-bg: rgba(255, 255, 255, 0.65);
+    --glass-blur: blur(12px);
+    --border: #d0d7e2;
+    --text: #1c1c1e;
+    --muted: #6e6e73;
+    --passed-text: #155724;
+    --passed-bg: rgba(40, 167, 69, 0.15);
+    --failed-text: #721c24;
+    --failed-bg: rgba(220, 53, 69, 0.15);
+    --skipped-text: #3d3d40;
+    --skipped-bg: rgba(142, 142, 147, 0.15);
+    --xpassed-text: #0d546b;
+    --xpassed-bg: rgba(90, 200, 250, 0.15);
+    --xfailed-text: #4f1f6b;
+    --xfailed-bg: rgba(175, 82, 222, 0.15);
+    --error-text: #6a3d00;
+    --error-bg: rgba(255, 149, 0, 0.15);
+    --accent: #007aff;
+    --row-hover: rgba(0, 0, 0, 0.03);
+    --elev-bg: rgba(255, 255, 255, 0.75);
+    --elev-border-strong: #c7d0dd;
+    --shadow: rgba(0, 0, 0, 0.08)
+}
+
+[data-theme="dark"] {
+    --bg: #222b3a;
+    --bg2: #2a3346;
+    --glass-bg: rgba(44, 56, 76, 0.58);
+    --glass-blur: blur(16px);
+    --border: #8d96ac;
+    --text: #f7f9ff;
+    --muted: #c3cad8;
+    --passed-text: #a6f5b5;
+    --passed-bg: rgba(40, 167, 69, 0.22);
+    --failed-text: #ffb3ad;
+    --failed-bg: rgba(255, 69, 58, 0.22);
+    --skipped-text: #d6d6da;
+    --skipped-bg: rgba(142, 142, 147, 0.22);
+    --xpassed-text: #c2edff;
+    --xpassed-bg: rgba(100, 210, 255, 0.22);
+    --xfailed-text: #e7c9fb;
+    --xfailed-bg: rgba(191, 90, 242, 0.22);
+    --error-text: #ffd7a3;
+    --error-bg: rgba(255, 159, 10, 0.22);
+    --accent: #0a84ff;
+    --row-hover: rgba(255, 255, 255, 0.06);
+    --elev-bg: rgba(52, 64, 88, 0.62);
+    --elev-border-strong: #3b4864;
+    --shadow: rgba(0, 0, 0, 0.35)
+}
+
+* {
+    box-sizing: border-box
+}
+
+html {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+    line-height: 1.4
+}
+
+body {
+    margin: 0;
+    background: linear-gradient(135deg, var(--bg), var(--bg2));
+    color: var(--text);
+    transition: background .3s, color .3s
+}
+
+.header {
+    position: relative;
+    padding: 24px 16px;
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: var(--glass-blur);
+    background: var(--glass-bg)
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto
+}
+
+.title {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 auto;
+    text-align: center;
+    color: var(--text)
+}
+
+.theme-toggle {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: var(--elev-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+    box-shadow: 0 4px 12px var(--shadow);
+    backdrop-filter: var(--glass-blur);
+    color: var(--text)
+}
+
+.theme-toggle .icon-light {
+    display: none
+}
+
+html[data-theme=dark] .theme-toggle .icon-light {
+    display: block
+}
+
+html[data-theme=dark] .theme-toggle .icon-dark {
+    display: none
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    margin: 16px 0
+}
+
+.card {
+    backdrop-filter: var(--glass-blur);
+    background: var(--elev-bg);
+    border: 1px solid var(--elev-border-strong);
+    border-radius: 16px;
+    padding: 14px;
+    text-align: center;
+    box-shadow: 0 6px 24px var(--shadow)
+}
+
+.card[data-filter] {
+    cursor: pointer;
+    user-select: none
+}
+
+.card[data-filter].active {
+    outline: 2px solid var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15)
+}
+
+.card .label {
+    font-size: 12px;
+    color: var(--muted)
+}
+
+.card .value {
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 4px
+}
+
+.card.total .value {
+    color: var(--text)
+}
+
+.card.passed {
+    background: var(--passed-bg);
+    color: var(--passed-text)
+}
+
+.card.passed .value,
+.card.passed .label {
+    color: var(--passed-text)
+}
+
+.card.failed {
+    background: var(--failed-bg);
+    color: var(--failed-text)
+}
+
+.card.failed .value,
+.card.failed .label {
+    color: var(--failed-text)
+}
+
+.card.skipped {
+    background: var(--skipped-bg);
+    color: var(--skipped-text)
+}
+
+.card.skipped .value,
+.card.skipped .label {
+    color: var(--skipped-text)
+}
+
+.card.xfailed {
+    background: var(--xfailed-bg);
+    color: var(--xfailed-text)
+}
+
+.card.xfailed .value,
+.card.xfailed .label {
+    color: var(--xfailed-text)
+}
+
+.card.xpassed {
+    background: var(--xpassed-bg);
+    color: var(--xpassed-text)
+}
+
+.card.xpassed .value,
+.card.xpassed .label {
+    color: var(--xpassed-text)
+}
+
+.card.error {
+    background: var(--error-bg);
+    color: var(--error-text)
+}
+
+.card.error .value,
+.card.error .label {
+    color: var(--error-text)
+}
+
+.table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch
+}
+
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 12px 0;
+    background: var(--elev-bg);
+    backdrop-filter: var(--glass-blur);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 6px 24px var(--shadow);
+    border: 1px solid var(--elev-border-strong)
+}
+
+.table th,
+.table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top
+}
+
+.table th {
+    background: var(--glass-bg);
+    text-align: left;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap
+}
+
+.table tr:hover {
+    background: var(--row-hover)
+}
+
+.search {
+    width: 100%;
+    margin: 16px 0 8px 0
+}
+
+.search input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--elev-border-strong);
+    background: var(--elev-bg);
+    backdrop-filter: var(--glass-blur);
+    color: var(--text);
+    box-shadow: 0 2px 10px var(--shadow)
+}
+
+.status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1
+}
+
+.status.passed {
+    background: var(--passed-bg);
+    color: var(--passed-text)
+}
+
+.status.failed {
+    background: var(--failed-bg);
+    color: var(--failed-text)
+}
+
+.status.skipped {
+    background: var(--skipped-bg);
+    color: var(--skipped-text)
+}
+
+.status.xpassed {
+    background: var(--xpassed-bg);
+    color: var(--xpassed-text)
+}
+
+.status.xfailed {
+    background: var(--xfailed-bg);
+    color: var(--xfailed-text)
+}
+
+.status.error {
+    background: var(--error-bg);
+    color: var(--error-text)
+}
+
+.test-row {
+    cursor: pointer
+}
+
+.details-row td {
+    background: var(--glass-bg)
+}
+
+.details {
+    position: relative;
+    padding: 10px 6px
+}
+
+.details .grid {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 6px 12px;
+    align-items: start
+}
+
+.details .k {
+    font-size: 12px;
+    color: var(--muted)
+}
+
+.details .v {
+    font-size: 13px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    overflow-x: auto
+}
+
+.details .v ul {
+    padding-left: 20px;
+    list-style-type: none;
+    margin: 4px 0
+}
+
+.details .v ul li {
+    padding: 2px 0
+}
+
+.details .v .step-failed>strong {
+    color: var(--failed-text)
+}
+
+.details .v .assert-passed {
+    color: var(--passed-text)
+}
+
+.details .v .assert-failed {
+    color: var(--failed-text)
+}
+
+.assert-label.clickable {
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 2px;
+}
+
+.assert-label.clickable:hover {
+    text-decoration-style: solid;
+}
+
+.details-icon {
+    font-size: 11px;
+    opacity: 0.7;
+    margin-left: 4px;
+    transition: opacity 0.2s ease;
+}
+
+.assert-label.clickable:hover .details-icon {
+    opacity: 1;
+}
+
+.assert-details {
+    margin-top: 4px;
+    margin-left: 16px;
+    padding: 6px 10px;
+    background: var(--glass-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.assert-details .details-content {
+    color: var(--muted);
+}
+
+.assert-details .details-content div {
+    margin: 2px 0;
+}
+
+.small {
+    font-size: 12px;
+    color: var(--muted)
+}
+
+.mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    overflow-wrap: anywhere
+}
+
+.details-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 6px
+}
+
+.details-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--elev-border-strong);
+    background: var(--elev-bg);
+    backdrop-filter: var(--glass-blur);
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 0 4px 16px var(--shadow)
+}
+
+[data-theme="dark"] .details-btn {
+    color: var(--text)
+}
+
+.details-btn.copied {
+    animation: clickPulse 300ms ease
+}
+
+@keyframes clickPulse {
+    0% {
+        transform: scale(0.96)
+    }
+
+    50% {
+        transform: scale(1.03)
+    }
+
+    100% {
+        transform: scale(1)
+    }
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center
+}
+
+.modal[hidden] {
+    display: none
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    cursor: pointer
+}
+
+.modal-content {
+    position: relative;
+    background: var(--elev-bg);
+    border-radius: 12px;
+    box-shadow: 0 12px 48px var(--shadow);
+    width: 90%;
+    max-width: 800px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--elev-border-strong)
+}
+
+.modal-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 16px
+}
+
+.modal-close {
+    font-size: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    padding: 0 8px
+}
+
+.modal-body {
+    padding: 16px;
+    overflow-y: auto;
+    flex-grow: 1
+}
+
+.modal-body pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-all
+}
+
+.modal-body img {
+    max-width: 100%;
+    height: auto;
+    display: block
+}
+
+/* Styles for details block content to fit within allocated space */
+.details .v pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    overflow-x: auto;
+    max-width: 100%
+}
+
+/* Logs table styling */
+.logs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.logs-table td {
+    padding: 6px 10px;
+    vertical-align: top;
+    border: none;
+}
+
+.logs-table .log-level {
+    width: 70px;
+    font-weight: 600;
+    text-align: center;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-size: 10px;
+}
+
+.logs-table .log-logger {
+    width: 150px;
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.logs-table .log-message {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-size: 12px;
+    max-width: 0; /* Forces the cell to take remaining space */
+    width: 100%;
+}
+
+/* Log level colors */
+.log-level.DEBUG {
+    background: rgba(142, 142, 147, 0.15);
+    color: var(--muted);
+}
+
+.log-level.INFO {
+    background: rgba(0, 122, 255, 0.15);
+    color: var(--accent);
+}
+
+.log-level.WARNING {
+    background: rgba(255, 149, 0, 0.15);
+    color: var(--error-text);
+}
+
+.log-level.ERROR {
+    background: rgba(255, 69, 58, 0.22);
+    color: var(--failed-text);
+}
+
+.log-level.CRITICAL {
+    background: rgba(175, 82, 222, 0.22);
+    color: var(--xfailed-text);
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .log-level.DEBUG {
+    background: rgba(142, 142, 147, 0.22);
+    color: var(--muted);
+}
+
+[data-theme="dark"] .log-level.INFO {
+    background: rgba(100, 210, 255, 0.22);
+    color: var(--xpassed-text);
+}
+
+[data-theme="dark"] .log-level.WARNING {
+    background: rgba(255, 159, 10, 0.22);
+    color: var(--error-text);
+}
+
+[data-theme="dark"] .log-level.ERROR {
+    background: rgba(255, 69, 58, 0.22);
+    color: var(--failed-text);
+}
+
+[data-theme="dark"] .log-level.CRITICAL {
+    background: rgba(191, 90, 242, 0.22);
+    color: var(--xfailed-text);
+}

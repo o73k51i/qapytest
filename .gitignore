@@ -1,0 +1,33 @@
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Virtual environments
+venv/
+.venv/
+**/*.env
+
+# Data
+**/*.html
+**/*.log
+
+# PyTest
+**/*cache*
+**/*.pyc

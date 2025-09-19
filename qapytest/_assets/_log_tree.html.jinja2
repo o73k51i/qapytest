@@ -1,0 +1,51 @@
+{% macro render_log_tree(log_list, test_index, attachment_counter={'value': 0}, assert_counter={'value': 0}) %}
+{% if log_list %}
+<ul>
+{% for entry in log_list %}
+    {% if entry.type == 'step' %}
+        <li class="{{ 'step-passed' if entry.passed else 'step-failed' }}">
+            {{ '✔︎' if entry.passed else '✖︎' }} <strong>Step:</strong> {{ entry.message|e }}
+            {# --- Recursive Call --- #}
+            {{ render_log_tree(entry.children, test_index, attachment_counter, assert_counter) }}
+        </li>
+    {% elif entry.type == 'assert' %}
+        {% set _ = assert_counter.update({'value': assert_counter.value + 1}) %}
+        <li class="{{ 'assert-passed' if entry.passed else 'assert-failed' }}">
+            {% set assert_id = 'assert-details-' ~ test_index ~ '-' ~ assert_counter.value %}
+            {% set has_details = entry.get('details') %}
+            
+            <span class="assert-label{% if has_details %} clickable{% endif %}" 
+                  {% if has_details %}data-toggle-target="#{{ assert_id }}" role="button" tabindex="0"{% endif %}>
+                {{ '✔︎' if entry.passed else '✖︎' }} {{ entry.label|e }}
+                {% if has_details %}<span class="details-icon">ℹ️</span>{% endif %}
+            </span>
+            
+            {% if has_details %}
+                <div class="assert-details" id="{{ assert_id }}" style="display: none;">
+                    {% if entry.details is sequence and entry.details is not string %}
+                        <div class="details-content">
+                            {% for detail_line in entry.details %}
+                                <div>{{ detail_line|e }}</div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="details-content">
+                            {% for detail_line in entry.details.split('\n') %}
+                                <div>{{ detail_line|e }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </li>
+    {% elif entry.type == 'attachment' %}
+        {% set _ = attachment_counter.update({'value': attachment_counter.value + 1}) %}
+        {% set modal_id = 'attachment-modal-' ~ test_index ~ '-' ~ attachment_counter.value %}
+        <li>
+            <button class="details-btn" type="button" data-modal-target="#{{ modal_id }}">📎 {{ entry.label|e }}</button>
+        </li>
+    {% endif %}
+{% endfor %}
+</ul>
+{% endif %}
+{% endmacro %}
