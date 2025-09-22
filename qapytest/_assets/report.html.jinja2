@@ -52,7 +52,7 @@
                 <tr class="test-row" data-status="{{ result.outcome }}" data-text="{{ search_text }}" role="button" tabindex="0" aria-expanded="false" aria-controls="{{ details_id }}">
                     <td class="small">{{ loop.index }}</td>
                     <td>
-                        <div class="mono">{{ result.title|e }}</div>
+                        <div class="mono">{{ decode_unicode_escapes(result.title)|e }}</div>
                         {% if params_str %}<div class="small">Parametrize: {{ params_str|e }}</div>{% endif %}
                     </td>
                     <td><span class="status {{ result.outcome }}">{{ result.outcome }}</span></td>
@@ -69,7 +69,7 @@
                                 <button class="details-btn copy-btn" type="button" data-copy="#grid-{{ details_id }}" title="Copy details"><span>📋</span> Copy</button>
                             </div>
                             <div class="grid" id="grid-{{ details_id }}">
-                                <div class="k">NodeID</div><div class="v mono">{{ result.nodeid|e }}</div>
+                                <div class="k">NodeID</div><div class="v mono">{{ decode_unicode_escapes(result.nodeid)|e }}</div>
                                 <div class="k">File</div><div class="v mono">{{ result.path|e }}</div>
                                 {% if result.details.headline %}
                                 <div class="k">Result</div><div class="v"><span class="status {{ result.outcome }}">{{ result.details.headline|e }}</span></div>
@@ -106,7 +106,7 @@
         <div class="modal-overlay" data-modal-close></div>
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="mono">{{ result.title|e }}</h3>
+                <h3 class="mono">{{ decode_unicode_escapes(result.title)|e }}</h3>
                 <button class="modal-close" data-modal-close>&times;</button>
             </div>
             <div class="modal-body"><pre><code>{{ result.details.captured_logs|e }}</code></pre></div>
