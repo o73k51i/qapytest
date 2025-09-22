@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2025-09-22
+
+### Fixed
+- 🌐 **Unicode support in HTML reports** - fixed display of Cyrillic and other non-ASCII characters in parametrized test names
+- 📊 **Parameter display** - test parameters with Unicode characters now show properly instead of escape sequences
+- 🔧 **NodeID formatting** - improved Unicode handling in test identification strings
+
+### Added
+- ✅ **Unicode decoding functions** - added `decode_unicode_escapes()` utility for proper character rendering
+- 📝 **Enhanced parameter parsing** - improved `parse_params_from_nodeid()` with Unicode escape sequence support
+- 🧪 **Comprehensive tests** - added test coverage for Unicode handling functions
+
 ## [0.1.1] - 2025-09-19
 
 ### Changed
@@ -40,5 +52,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable attachment size limits
 - Professional report styling with responsive design
 
+[0.1.2]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.2
 [0.1.1]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.1
 [0.1.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.0
