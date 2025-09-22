@@ -266,6 +266,86 @@ class TestTextUtilities:
         params = utils.parse_params_from_nodeid(nodeid_complex)
         assert params == "complex-param-with-dashes"
 
+    def test_parse_params_from_nodeid_with_unicode_escapes(self):
+        """Test parsing parameters with Unicode escape sequences from pytest nodeid."""
+        nodeid_cyrillic = "test_file.py::test_function[\\u041f\\u0435\\u0440\\u0448\\u0438\\u0439]"
+        params = utils.parse_params_from_nodeid(nodeid_cyrillic)
+        assert params == "Перший"
+
+        nodeid_multiple = (
+            "test_file.py::test_function[\\u041f\\u0435\\u0440\\"
+            "u0448\\u0438\\u0439-\\u0414\\u0440\\u0443\\u0433\\u0438\\u0439]"
+        )
+        params = utils.parse_params_from_nodeid(nodeid_multiple)
+        assert params == "Перший-Другий"
+
+        nodeid_mixed = "test_file.py::test_function[test-\\u0422\\u0440\\u0435\\u0442\\u0456\\u0439-param]"
+        params = utils.parse_params_from_nodeid(nodeid_mixed)
+        assert params == "test-Третій-param"
+
+        nodeid_malformed = "test_file.py::test_function[\\u041Z-invalid]"
+        params = utils.parse_params_from_nodeid(nodeid_malformed)
+        assert params == "\\u041Z-invalid"  # Should return original string on decode error
+
+    def test_decode_unicode_escapes(self):
+        """Test decoding Unicode escape sequences in text."""
+        text_with_escapes = "\\u041f\\u0435\\u0440\\u0448\\u0438\\u0439"
+        decoded = utils.decode_unicode_escapes(text_with_escapes)
+        assert decoded == "Перший"
+
+        regular_text = "Regular text without escapes"
+        decoded = utils.decode_unicode_escapes(regular_text)
+        assert decoded == "Regular text without escapes"
+
+        cyrillic_text = "Перевірка відображення параметризації"
+        decoded = utils.decode_unicode_escapes(cyrillic_text)
+        assert decoded == "Перевірка відображення параметризації"
+
+        mixed_text = "Test \\u041f\\u0435\\u0440\\u0448\\u0438\\u0439 and regular text"
+        decoded = utils.decode_unicode_escapes(mixed_text)
+        assert decoded == "Test Перший and regular text"
+
+        empty_text = ""
+        decoded = utils.decode_unicode_escapes(empty_text)
+        assert decoded == ""
+
+        malformed_text = "\\u041Z invalid escape"
+        decoded = utils.decode_unicode_escapes(malformed_text)
+        assert decoded == "\\u041Z invalid escape"  # Should return original on error
+
+        emoji_text = "\\u2764\\ufe0f"  # Heart emoji ❤️
+        decoded = utils.decode_unicode_escapes(emoji_text)
+        assert decoded == "❤️"
+
+        no_escapes_text = "This text has no unicode escapes"
+        decoded = utils.decode_unicode_escapes(no_escapes_text)
+        assert decoded == "This text has no unicode escapes"
+
+    def test_unicode_functions_integration(self):
+        """Test integration of Unicode functions with realistic pytest nodeid examples."""
+        realistic_nodeid = "temp.py::test_parametrized[\\u041f\\u0435\\u0440\\u0448\\u0438\\u0439]"
+
+        params = utils.parse_params_from_nodeid(realistic_nodeid)
+        assert params == "Перший"
+
+        decoded_nodeid = utils.decode_unicode_escapes(realistic_nodeid)
+        assert decoded_nodeid == "temp.py::test_parametrized[Перший]"
+
+        title_with_escapes = (
+            "\\u041f\\u0435\\u0440\\u0435\\u0432\\u0456\\u0440\\u043a\\u0430 "
+            "\\u0432\\u0456\\u0434\\u043e\\u0431\\u0440\\u0430\\u0436\\u0435\\u043d\\u043d\\u044f "
+            "\\u043f\\u0430\\u0440\\u0430\\u043c\\u0435\\u0442\\u0440\\u0438\\u0437\\u0430\\u0446\\u0456\\u0457"
+        )
+        decoded_title = utils.decode_unicode_escapes(title_with_escapes)
+        assert decoded_title == "Перевірка відображення параметризації"
+
+        multi_param_nodeid = (
+            "test.py::test_func[\\u041f\\u0435\\u0440\\u0448\\u0438\\u0439-"
+            "\\u0414\\u0440\\u0443\\u0433\\u0438\\u0439-\\u0422\\u0440\\u0435\\u0442\\u0456\\u0439]"
+        )
+        multi_params = utils.parse_params_from_nodeid(multi_param_nodeid)
+        assert multi_params == "Перший-Другий-Третій"
+
 
 class TestReportUtilities:
     """Tests for report-related utility functions."""
