@@ -144,6 +144,7 @@ class HtmlReportPlugin:
             env.globals["fmt_datetime"] = utils.fmt_datetime
             env.globals["fmt_seconds"] = utils.fmt_seconds
             env.globals["parse_params_from_nodeid"] = utils.parse_params_from_nodeid
+            env.globals["decode_unicode_escapes"] = utils.decode_unicode_escapes
 
             template = env.get_template("report.html.jinja2")
             html_content = template.render(context)
