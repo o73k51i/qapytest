@@ -271,7 +271,25 @@ def parse_params_from_nodeid(nodeid: str) -> str:
         start = nodeid.rfind("[")
         end = nodeid.rfind("]")
         if start != -1 and end != -1 and end > start:
-            return nodeid[start + 1 : end]
+            param_str = nodeid[start + 1 : end]
+            try:
+                import codecs
+
+                return codecs.decode(param_str, "unicode_escape")
+            except Exception:
+                return param_str
     except Exception:  # noqa: S110
         pass
     return ""
+
+
+def decode_unicode_escapes(text: str) -> str:
+    """Decode Unicode escape sequences in text to readable characters."""
+    try:
+        if "\\u" in text:
+            import codecs
+
+            return codecs.decode(text, "unicode_escape")
+        return text
+    except Exception:
+        return text
