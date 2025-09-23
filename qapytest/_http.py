@@ -79,9 +79,21 @@ class HttpClient(Client):
         response = super().request(*args, **kwargs)
         self._logger.info(f"Request made to {response.url}")
         self._logger.debug(f"Request headers: {dict(response.request.headers)}")
-        self._logger.debug(f"Request body: {response.request.content}")
+
+        try:
+            request_body = response.request.content
+            self._logger.debug(f"Request body: {request_body}")
+        except Exception as e:
+            self._logger.debug(f"Request body: <streaming content - {type(e).__name__}>")
+
         self._logger.info(f"Response status code: {response.status_code}")
         self._logger.info(f"Response time: {response.elapsed.total_seconds():.3f} s")
         self._logger.debug(f"Response headers: {dict(response.headers)}")
-        self._logger.debug(f"Response body: {response.text}")
+
+        try:
+            response_body = response.text
+            self._logger.debug(f"Response body: {response_body}")
+        except Exception as e:
+            self._logger.debug(f"Response body: <error reading content - {type(e).__name__}>")
+
         return response
