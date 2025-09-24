@@ -3,9 +3,10 @@
 import json
 import logging
 import re
-from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
-from httpx import Client, Response
+from httpx import Client, QueryParams, Response
+
+from qapytest._config import AnyType
 
 
 class HttpClient(Client):
@@ -86,7 +87,7 @@ class HttpClient(Client):
         self._max_log_size = max_log_size
         self._mask_sensitive_data = mask_sensitive_data
 
-        default_sensitive = {
+        default_sensitive_headers = {
             "authorization",
             "cookie",
             "set-cookie",
@@ -95,11 +96,10 @@ class HttpClient(Client):
             "auth-token",
             "access-token",
         }
-
         if sensitive_headers is None:
-            self._sensitive_headers = default_sensitive
+            self._sensitive_headers = default_sensitive_headers
         else:
-            self._sensitive_headers = {header.lower() for header in sensitive_headers}
+            self._sensitive_headers = {h.lower() for h in sensitive_headers}
 
         default_sensitive_json = {
             "password",
@@ -112,21 +112,13 @@ class HttpClient(Client):
             "authorization",
             "session",
         }
-
         if sensitive_json_fields is None:
             self._sensitive_json_fields = default_sensitive_json
         else:
-            self._sensitive_json_fields = {field.lower() for field in sensitive_json_fields}
+            self._sensitive_json_fields = {f.lower() for f in sensitive_json_fields}
 
     def _truncate_content(self, content: bytes | str) -> str:
-        """Truncate content to max_log_size and add summary information.
-
-        Args:
-            content: Content to truncate (bytes or string)
-
-        Returns:
-            Truncated content as string with size information
-        """
+        """Truncate content to max_log_size and add summary information."""
         if isinstance(content, bytes | bytearray | memoryview):
             content_bytes = bytes(content) if not isinstance(content, bytes) else content
             original_size = len(content_bytes)
@@ -134,7 +126,6 @@ class HttpClient(Client):
                 truncated = content_bytes[: self._max_log_size].decode("utf-8", errors="replace")
                 return f"{truncated}... <truncated, total size: {original_size} bytes>"
             return content_bytes.decode("utf-8", errors="replace")
-
         if isinstance(content, str):
             original_size = len(content.encode("utf-8"))
             if original_size > self._max_log_size:
@@ -142,21 +133,12 @@ class HttpClient(Client):
                 truncated = content_bytes[: self._max_log_size].decode("utf-8", errors="ignore")
                 return f"{truncated}... <truncated, total size: {original_size} bytes>"
             return content
-
         return str(content)
 
     def _sanitize_headers(self, headers: dict[str, str]) -> dict[str, str]:
-        """Sanitize headers by masking sensitive values.
-
-        Args:
-            headers: Dictionary of headers to sanitize
-
-        Returns:
-            Dictionary with sensitive headers masked
-        """
+        """Sanitize headers by masking sensitive values."""
         if not self._mask_sensitive_data:
             return headers
-
         sanitized = {}
         for key, value in headers.items():
             if key.lower() in self._sensitive_headers:
@@ -169,57 +151,15 @@ class HttpClient(Client):
         return sanitized
 
     def _format_headers(self, headers: dict[str, str]) -> str:
-        """Format headers for logging with smart formatting based on size.
-
-        Args:
-            headers: Dictionary of headers to format
-
-        Returns:
-            Formatted headers string (compact for small, pretty for large)
-        """
+        """Format headers for logging with smart formatting based on size."""
         headers_str = str(headers)
-
-        if len(headers_str) > 100:
-            formatted_lines = []
-            for key, value in headers.items():
-                formatted_lines.append(f"  {key}: {value}")
+        if len(headers_str) > 150 or "\n" in headers_str:
+            formatted_lines = [f"    {key}: {value}" for key, value in headers.items()]
             return "{\n" + ",\n".join(formatted_lines) + "\n}"
-
         return headers_str
 
-    def _sanitize_json_content(self, content: str) -> str:
-        """Sanitize JSON content by masking sensitive fields.
-
-        Args:
-            content: JSON string content to sanitize
-
-        Returns:
-            Sanitized JSON string with sensitive fields masked
-        """
-        if not self._mask_sensitive_data:
-            return content
-
-        try:
-            data = json.loads(content)
-            sanitized_data = self._mask_sensitive_json_fields(data)
-            if len(content) > 100:
-                return json.dumps(sanitized_data, indent=2, ensure_ascii=False)
-            return json.dumps(sanitized_data, separators=(",", ":"))
-        except (json.JSONDecodeError, TypeError):
-            return self._mask_sensitive_text_patterns(content)
-
-    def _mask_sensitive_json_fields(
-        self,
-        data: dict | list | str | int | float | bool | None,
-    ) -> dict | list | str | int | float | bool | None:
-        """Recursively mask sensitive fields in JSON data.
-
-        Args:
-            data: JSON data structure to sanitize
-
-        Returns:
-            Sanitized data structure
-        """
+    def _mask_sensitive_json_fields(self, data: AnyType) -> AnyType:
+        """Recursively mask sensitive fields in JSON data."""
         if isinstance(data, dict):
             result = {}
             for key, value in data.items():
@@ -233,18 +173,10 @@ class HttpClient(Client):
             return result
         if isinstance(data, list):
             return [self._mask_sensitive_json_fields(item) for item in data]
-
         return data
 
     def _mask_sensitive_text_patterns(self, content: str) -> str:
-        """Mask sensitive patterns in plain text using regex.
-
-        Args:
-            content: Text content to sanitize
-
-        Returns:
-            Text with sensitive patterns masked
-        """
+        """Mask sensitive patterns in plain text using regex."""
         patterns = [
             # Authorization patterns
             (r"(authorization[\"\s]*[:=][\"\s]*)(bearer\s+)([a-zA-Z0-9._-]+)", r"\1\2***MASKED***"),
@@ -255,192 +187,113 @@ class HttpClient(Client):
             # Token patterns
             (r"(token[\"\s]*[:=][\"\s]*[\"\'']?)([a-zA-Z0-9._-]+)", r"\1***MASKED***"),
         ]
-
         result = content
-        for pattern, replacement in patterns:
-            result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
-
+        if self._mask_sensitive_data:
+            for pattern, replacement in patterns:
+                result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
         return result
 
-    def _sanitize_url(self, url: str) -> str:
-        """Sanitize URL by masking sensitive query parameters.
-
-        Args:
-            url: URL string to sanitize
-
-        Returns:
-            URL with sensitive query parameters masked
-        """
+    def _sanitize_json_content(self, content: str) -> str:
+        """Sanitize JSON content, falling back to text sanitization."""
         if not self._mask_sensitive_data:
-            return url
-
+            return content
         try:
-            parsed = urlparse(url)
+            data = json.loads(content)
+            sanitized_data = self._mask_sensitive_json_fields(data)
+            if len(content) > 100 or "\n" in content:
+                return json.dumps(sanitized_data, indent=2, ensure_ascii=False)
+            return json.dumps(sanitized_data, separators=(",", ":"))
+        except (json.JSONDecodeError, TypeError):
+            return self._mask_sensitive_text_patterns(content)
 
-            if not parsed.query:
-                return url
+    def _sanitize_url_params(self, params: QueryParams) -> QueryParams:
+        """Sanitize query parameters by masking sensitive values."""
+        if not self._mask_sensitive_data:
+            return params
 
-            query_params = parse_qs(parsed.query, keep_blank_values=True)
+        sensitive_keys = {"access_token", "api_key", "auth_token", "secret", "token"}
 
-            sensitive_params = {
-                "access_token",
-                "api_key",
-                "apikey",
-                "auth_token",
-                "authorization",
-                "bearer",
-                "client_secret",
-                "jwt",
-                "password",
-                "passwd",
-                "pwd",
-                "secret",
-                "token",
-                "x-api-key",
-                "private_key",
-                "auth",
-                "authentication",
-                "credential",
-                "credentials",
-            }
+        sanitized_items = []
+        for key, value in params.multi_items():
+            if key.lower() in sensitive_keys:
+                sanitized_items.append((key, "***MASKED***"))
+            else:
+                sanitized_items.append((key, value))
 
-            sanitized_params = {}
-            for param_name, param_values in query_params.items():
-                if param_name.lower() in sensitive_params:
-                    masked_values = []
-                    for value in param_values:
-                        if isinstance(value, str) and len(value) > 4:
-                            masked_values.append(f"{value[:4]}***MASKED***")
-                        else:
-                            masked_values.append("***MASKED***")
-                    sanitized_params[param_name] = masked_values
-                else:
-                    sanitized_params[param_name] = param_values
+        return QueryParams(sanitized_items)
 
-            sanitized_query = urlencode(sanitized_params, doseq=True)
-
-            return urlunparse(
-                (
-                    parsed.scheme,
-                    parsed.netloc,
-                    parsed.path,
-                    parsed.params,
-                    sanitized_query,
-                    parsed.fragment,
-                ),
-            )
-
-        except Exception as e:
-            return f"{url} <URL sanitization error: {type(e).__name__}>"
-
-    def _safe_read_content(self, content_source: bytes | str | None, content_type: str = "content") -> str:
-        """Safely read content without consuming streaming data or causing memory issues.
-
-        Args:
-            content_source: Source to read content from (can be bytes, str, or stream)
-            content_type: Type description for logging purposes
-
-        Returns:
-            Safe representation of content for logging
-        """
+    def _safe_read_content(self, content_source: bytes | str | None) -> str:
+        """Safely read content without consuming streams."""
         try:
-            if hasattr(content_source, "read"):
-                return f"<streaming {content_type} - not consumed>"
-
-            if hasattr(content_source, "__iter__") and not isinstance(content_source, str | bytes):
-                return f"<iterable {content_type} - not consumed>"
-
+            if hasattr(content_source, "read") or (
+                hasattr(content_source, "__iter__") and not isinstance(content_source, str | bytes)
+            ):
+                return "<streaming content - not consumed>"
             if content_source is None:
                 return ""
-
             truncated_body = self._truncate_content(content_source)
             return self._sanitize_json_content(truncated_body)
-
         except Exception as e:
-            return f"<error reading {content_type} - {type(e).__name__}: {str(e)[:100]}>"
+            return f"<error reading content - {type(e).__name__}>"
 
     def _safe_get_response_preview(self, response: Response) -> str:
-        """Get a safe preview of response content without consuming the stream.
-
-        Args:
-            response: httpx Response object
-
-        Returns:
-            Safe preview of response content
-        """
+        """Get a safe preview of response content."""
         try:
-            content_length = response.headers.get("content-length")
-            if content_length:
+            if "content-length" in response.headers:
                 try:
-                    length = int(content_length)
+                    length = int(response.headers["content-length"])
                     if length > self._max_log_size * 10:
                         return f"<large response body - {length} bytes - not logged for performance>"
                 except ValueError:
                     pass
-
             content_type = response.headers.get("content-type", "").lower()
             streaming_types = [
                 "application/octet-stream",
                 "video/",
                 "audio/",
                 "image/",
-                "application/zip",
-                "application/gzip",
+                "zip",
+                "gzip",
                 "text/event-stream",
-                "multipart/form-data",
             ]
-
             if any(st in content_type for st in streaming_types):
                 return f"<streaming content type '{content_type}' - not logged>"
-
-            try:
-                content = response.text
-                return self._safe_read_content(content, "response body")
-            except Exception as e:
-                return f"<error reading response - {type(e).__name__}>"
-
+            return self._safe_read_content(response.text)
         except Exception as e:
-            return f"<error getting response preview - {type(e).__name__}>"
+            return f"<error reading response - {type(e).__name__}>"
 
     def request(self, *args, **kwargs) -> Response:
-        """Performs an HTTP request with automatic logging of details.
-
-        This method overrides the standard `request` from `httpx.Client`.
-        It first performs the request using the parent method, and then logs
-        key information about the request (URL, headers, body) and the response
-        (status code, time, headers, body).
-
-        Args:
-            *args: Positional arguments passed to `httpx.Client.request`.
-            **kwargs: Named arguments passed to `httpx.Client.request`
-                      (e.g., `method`, `url`, `json`, `params`, `headers`).
-
-        Returns:
-            An `httpx.Response` object with the result of the response.
-        """
+        """Performs an HTTP request with automatic logging of details."""
         response = super().request(*args, **kwargs)
 
-        sanitized_url = self._sanitize_url(str(response.url))
-        self._logger.info(f"Request made to {sanitized_url}")
+        url = response.url
+        method = response.request.method
 
-        sanitized_headers = self._sanitize_headers(dict(response.request.headers))
-        formatted_headers = self._format_headers(sanitized_headers)
-        self._logger.debug(f"Request headers: {formatted_headers}")
+        self._logger.info(
+            f"Sending HTTP [{method}] request to {url.scheme}://{url.host}{url.path}",
+        )
 
-        try:
-            request_body_log = self._safe_read_content(response.request.content, "request body")
-        except Exception as e:
-            request_body_log = f"<streaming content - {type(e).__name__}>"
-        self._logger.debug(f"Request body: {request_body_log}")
+        if url.params:
+            sanitized_params = self._sanitize_url_params(url.params)
+            self._logger.debug(f"Query parameters:\n{sanitized_params}")
+
+        sanitized_req_headers = self._sanitize_headers(dict(response.request.headers))
+        formatted_req_headers = self._format_headers(sanitized_req_headers)
+        self._logger.debug(f"Request headers:\n{formatted_req_headers}")
+
+        request_body_log = self._safe_read_content(response.request.content)
+        if request_body_log:
+            self._logger.debug(f"Request body:\n{request_body_log}")
 
         self._logger.info(f"Response status code: {response.status_code}")
         self._logger.info(f"Response time: {response.elapsed.total_seconds():.3f} s")
 
-        sanitized_response_headers = self._sanitize_headers(dict(response.headers))
-        formatted_response_headers = self._format_headers(sanitized_response_headers)
-        self._logger.debug(f"Response headers: {formatted_response_headers}")
+        sanitized_res_headers = self._sanitize_headers(dict(response.headers))
+        formatted_res_headers = self._format_headers(sanitized_res_headers)
+        self._logger.debug(f"Response headers:\n{formatted_res_headers}")
 
         response_body_log = self._safe_get_response_preview(response)
-        self._logger.debug(f"Response body: {response_body_log}")
+        if response_body_log:
+            self._logger.debug(f"Response body:\n{response_body_log}")
 
         return response
