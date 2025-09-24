@@ -1,5 +1,6 @@
 """Tests for GraphQLClient in QaPyTest."""
 
+import json
 from unittest.mock import MagicMock, patch
 
 import httpx
@@ -42,11 +43,9 @@ class TestGraphQLClient:
     @patch("httpx.Client")
     def test_execute_simple_query(self, mock_client_class: MagicMock) -> None:
         """Test executing a simple GraphQL query."""
-        # Setup mock client instance
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
 
-        # Setup mock response
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 200
         mock_response.elapsed.total_seconds.return_value = 0.123
@@ -62,18 +61,15 @@ class TestGraphQLClient:
         with patch.object(client._logger, "info") as mock_info, patch.object(client._logger, "debug") as mock_debug:  # noqa: SLF001
             response = client.execute(query)
 
-            # Verify response
             assert response == mock_response
 
-            # Verify HTTP call
             expected_payload = {"query": query}
             mock_client.post.assert_called_once_with(endpoint_url, json=expected_payload)
 
-            # Verify logging
             mock_info.assert_any_call(f"Sending GraphQL request to {endpoint_url}")
             mock_info.assert_any_call("Response status code: 200")
             mock_info.assert_any_call("Response time: 0.123 s")
-            mock_debug.assert_any_call(f"Query: {query}")
+            mock_debug.assert_any_call(f"Query:\n{query}")
 
     @patch("httpx.Client")
     def test_execute_query_with_variables(self, mock_client_class: MagicMock) -> None:
@@ -97,12 +93,10 @@ class TestGraphQLClient:
         with patch.object(client._logger, "debug") as mock_debug:  # noqa: SLF001
             response = client.execute(query, variables)
 
-            # Verify HTTP call with variables
             expected_payload = {"query": query, "variables": variables}
             mock_client.post.assert_called_once_with(endpoint_url, json=expected_payload)
 
-            # Verify variables logging
-            mock_debug.assert_any_call(f"Variables: {variables}")
+            mock_debug.assert_any_call(f"Variables:\n{json.dumps(variables, separators=(',', ':'))}")
 
             assert response == mock_response
 
@@ -147,7 +141,7 @@ class TestGraphQLClient:
         mock_client_class.return_value = mock_client
 
         mock_response = MagicMock(spec=httpx.Response)
-        mock_response.status_code = 200  # GraphQL errors still return 200
+        mock_response.status_code = 200
         mock_response.elapsed.total_seconds.return_value = 0.1
         mock_response.headers = {"Content-Type": "application/json"}
         mock_response.text = '{"errors": [{"message": "User not found"}]}'

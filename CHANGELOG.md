@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2025-09-24
+
+### Fixed
+- 🌐 **HTTP request logging** - improved logging format and sensitive data sanitization in HTTP requests/responses
+- 📊 **GraphQL client** - enhanced logging and data masking capabilities for GraphQL operations
+- 🧪 **Internal testing improvements** - updated test suite to align with current HttpClient and GraphQLClient implementations
+
 ## [0.1.2] - 2025-09-22
 
 ### Fixed
@@ -52,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable attachment size limits
 - Professional report styling with responsive design
 
+[0.1.3]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.3
 [0.1.2]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.2
 [0.1.1]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.1
 [0.1.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.0
