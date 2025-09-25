@@ -210,8 +210,9 @@ class BaseHttpClient(Client):
             if resp.elapsed
             else "Response time: <not available>",
         )
+        sanitized_headers = self._sanitize_headers(dict(resp.headers))
         self._logger.debug(
-            f"Response headers: {json.dumps(dict(resp.headers), ensure_ascii=False)}",
+            f"Response headers: {json.dumps(sanitized_headers, ensure_ascii=False)}",
         )
         content_type = resp.headers.get("Content-Type", "")
 
