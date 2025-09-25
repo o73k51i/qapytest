@@ -142,7 +142,7 @@ validate_json(api_response, schema_path="user_schema.json", strict=True)
 validate_json(api_response, schema=user_schema, strict=False)
 ```
 
-More about the API on the [documentation page](./docs/API.md).
+More about the API on the [documentation page](https://github.com/o73k51i/qapytest/blob/main/docs/API.md).
 
 ## Test markers
 
@@ -172,8 +172,8 @@ def test_user_login():
 - **`--report-theme {light,dark,auto}`** : choose the report theme: `light`, `dark` or `auto` (default).
 - **`--max-attachment-bytes N`** : maximum size of an attachment (in bytes) that will be inlined in the HTML; larger files will be truncated.
 
-More about CLI options on the [documentation page](./docs/CLI.md).
+More about CLI options on the [documentation page](https://github.com/o73k51i/qapytest/blob/main/docs/CLI.md).
 
 ## 📑 License
 
-This project is distributed under the [license](./LICENSE).
+This project is distributed under the [license](https://github.com/o73k51i/qapytest/blob/main/LICENSE).

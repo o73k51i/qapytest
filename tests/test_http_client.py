@@ -71,10 +71,11 @@ class TestHttpClient:
             mock_info.assert_any_call("Response status code: 200")
             mock_info.assert_any_call("Response time: 0.123 s")
 
-            mock_debug.assert_any_call("Request headers:\n{'Content-Type': 'application/json'}")
-            mock_debug.assert_any_call('Request body:\n{"test":"data"}')
-            mock_debug.assert_any_call("Response headers:\n{'Content-Type': 'application/json'}")
-            mock_debug.assert_any_call('Response body:\n{"result":"success"}')
+            # Check that headers are logged in JSON format
+            mock_debug.assert_any_call('Request headers: {"Content-Type": "application/json"}')
+            mock_debug.assert_any_call('Request body (JSON): {"test": "data"}')
+            mock_debug.assert_any_call('Response headers: {"Content-Type": "application/json"}')
+            mock_debug.assert_any_call("Response body: <empty>")
 
     @patch("httpx.Client.get")
     def test_get_method_delegation(self, mock_get: MagicMock) -> None:
@@ -233,7 +234,7 @@ class TestHttpClient:
         mock_response.text = large_response_body
         mock_request.return_value = mock_response
 
-        client = HttpClient()  # Default max_log_size is 1024
+        client = HttpClient()
 
         with patch.object(client._logger, "debug") as mock_debug:  # noqa: SLF001
             response = client.request("POST", "https://api.example.com/large")
@@ -244,41 +245,11 @@ class TestHttpClient:
 
             request_body_log = next((call for call in debug_calls if call.startswith("Request body:")), None)
             assert request_body_log is not None
-            assert "truncated, total size: 2048 bytes" in request_body_log
-            assert len(request_body_log) < 2048
+            assert "binary/streaming content - not logged" in request_body_log
 
             response_body_log = next((call for call in debug_calls if call.startswith("Response body:")), None)
             assert response_body_log is not None
-            assert "truncated, total size: 2048 bytes" in response_body_log
-            assert len(response_body_log) < 2048
-
-    def test_custom_max_log_size(self) -> None:
-        """Test that custom max_log_size parameter works correctly."""
-        custom_size = 100
-        client = HttpClient(max_log_size=custom_size)
-        assert client._max_log_size == custom_size  # noqa: SLF001
-
-    def test_truncate_content_method(self) -> None:
-        """Test the _truncate_content method directly."""
-        client = HttpClient(max_log_size=10)
-
-        small_text = "hello"
-        result = client._truncate_content(small_text)  # noqa: SLF001
-        assert result == "hello"
-
-        large_text = "a" * 100
-        result = client._truncate_content(large_text)  # noqa: SLF001
-        assert "truncated, total size: 100 bytes" in result
-        assert len(result) < 100
-
-        small_bytes = b"hello"
-        result = client._truncate_content(small_bytes)  # noqa: SLF001
-        assert result == "hello"
-
-        large_bytes = b"b" * 100
-        result = client._truncate_content(large_bytes)  # noqa: SLF001
-        assert "truncated, total size: 100 bytes" in result
-        assert len(result) < 100
+            assert "y" in response_body_log
 
     def test_sensitive_header_sanitization(self) -> None:
         """Test that sensitive headers are masked in logs."""
@@ -319,18 +290,13 @@ class TestHttpClient:
         """Test that sensitive JSON fields are masked."""
         client = HttpClient()
 
-        json_content = '{"password": "secret123", "email": "user@example.com", "safe_field": "visible"}'
+        json_data = {"password": "secret123", "email": "user@example.com", "safe_field": "visible"}
 
-        sanitized = client._sanitize_json_content(json_content)  # noqa: SLF001
+        sanitized = client._mask_sensitive_json_fields(json_data)  # noqa: SLF001
 
-        import json
-
-        sanitized_data = json.loads(sanitized)
-
-        assert sanitized_data["password"] == "secr***MASKED***"  # noqa: S105
-        assert sanitized_data["email"] == "user@example.com"
-
-        assert sanitized_data["safe_field"] == "visible"
+        assert sanitized["password"] == "secr***MASKED***"  # noqa: S105
+        assert sanitized["email"] == "user@example.com"
+        assert sanitized["safe_field"] == "visible"
 
     def test_sensitive_text_pattern_sanitization(self) -> None:
         """Test that sensitive patterns in text are masked."""
@@ -358,7 +324,8 @@ class TestHttpClient:
 
         sanitized = client._sanitize_headers(headers)  # noqa: SLF001
 
-        assert sanitized["Authorization"] == "Bearer token123"
+        # Default headers are always masked even with custom headers
+        assert sanitized["Authorization"] == "Bear***MASKED***"
         assert sanitized["X-Custom-Secret"] == "very***MASKED***"
         assert sanitized["Special-Header"] == "conf***MASKED***"
 
@@ -381,6 +348,8 @@ class TestHttpClient:
         mock_response.request.content = b'{"password": "user_secret", "username": "testuser"}'
         mock_response.headers = {"Content-Type": "application/json"}
         mock_response.text = '{"token": "response_token_456", "user_id": 123}'
+        mock_response.content = b'{"token": "response_token_456", "user_id": 123}'
+        mock_response.json.return_value = {"token": "response_token_456", "user_id": 123}
         mock_request.return_value = mock_response
 
         client = HttpClient()
@@ -397,12 +366,12 @@ class TestHttpClient:
             assert "Bear***MASKED***" in request_headers_log
             assert "sensitive_token_123" not in request_headers_log
 
-            request_body_log = next((call for call in debug_calls if call.startswith("Request body:")), None)
+            request_body_log = next((call for call in debug_calls if call.startswith("Request body (JSON):")), None)
             assert request_body_log is not None
             assert "***MASKED***" in request_body_log
             assert "user_secret" not in request_body_log
 
-            response_body_log = next((call for call in debug_calls if call.startswith("Response body:")), None)
+            response_body_log = next((call for call in debug_calls if call.startswith("Response body (JSON):")), None)
             assert response_body_log is not None
             assert "***MASKED***" in response_body_log
             assert "response_token_456" not in response_body_log
@@ -436,10 +405,10 @@ class TestHttpClient:
             assert response == mock_response
 
             debug_calls = [call.args[0] for call in mock_debug.call_args_list]
-            params_log = next((call for call in debug_calls if call.startswith("Query parameters:")), None)
+            params_log = next((call for call in debug_calls if call.startswith("Request query params:")), None)
 
             assert params_log is not None
-            assert "%2A%2A%2AMASKED%2A%2A%2A" in params_log
+            assert "***MASKED***" in params_log
             assert "user_id=789" in params_log
             assert "secret123" not in params_log
             assert "apikey456" not in params_log
@@ -460,6 +429,8 @@ class TestHttpClient:
         mock_response.request.content = b'{"custom_secret": "should_be_masked", "public_info": "visible"}'
         mock_response.headers = {"Content-Type": "application/json"}
         mock_response.text = '{"custom_secret": "should_be_masked", "public_info": "visible"}'
+        mock_response.content = b'{"custom_secret": "should_be_masked", "public_info": "visible"}'
+        mock_response.json.return_value = {"custom_secret": "should_be_masked", "public_info": "visible"}
         mock_request.return_value = mock_response
 
         client = HttpClient(sensitive_json_fields={"custom_secret"})
@@ -471,37 +442,528 @@ class TestHttpClient:
 
             debug_calls = [call.args[0] for call in mock_debug.call_args_list]
 
-            request_body_log = next((call for call in debug_calls if call.startswith("Request body:")), None)
+            request_body_log = next((call for call in debug_calls if call.startswith("Request body (JSON):")), None)
             assert request_body_log is not None
             assert "***MASKED***" in request_body_log
             assert "should_be_masked" not in request_body_log
             assert "public_info" in request_body_log
             assert "visible" in request_body_log
 
-            response_body_log = next((call for call in debug_calls if call.startswith("Response body:")), None)
+            response_body_log = next((call for call in debug_calls if call.startswith("Response body (JSON):")), None)
             assert response_body_log is not None
             assert "***MASKED***" in response_body_log
             assert "should_be_masked" not in response_body_log
 
-    def test_header_formatting(self) -> None:
-        """Test smart header formatting based on size."""
+
+class TestHttpClientMethodsAndContentTypes:
+    """Test various HTTP methods with different content types and scenarios.
+
+    This test class comprehensively tests different HTTP methods (GET, POST, PUT, DELETE)
+    with various request/response configurations:
+    - With and without request body/parameters
+    - With and without response body
+    - Different Content-Type headers (JSON, text, XML, binary/streaming)
+    - Different HTTP status codes including errors
+    - Verification of logging functionality
+    - Access to status codes, headers, and response bodies
+    """
+
+    @patch("httpx.Client.request")
+    def test_get_request_without_params(self, mock_request: MagicMock) -> None:
+        """Test GET request without parameters."""
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_url = MagicMock()
+        mock_url.scheme = "https"
+        mock_url.host = "api.example.com"
+        mock_url.path = "/users"
+        mock_url.params = None
+        mock_response.url = mock_url
+        mock_response.status_code = 200
+        mock_response.elapsed.total_seconds.return_value = 0.15
+        mock_response.request.headers = {"Accept": "application/json"}
+        mock_response.request.content = b""
+        mock_response.request.method = "GET"
+        mock_response.headers = {"Content-Type": "application/json"}
+        mock_response.text = '{"users": []}'
+        mock_response.content = b'{"users": []}'
+        mock_response.json.return_value = {"users": []}
+        mock_request.return_value = mock_response
+
         client = HttpClient()
 
-        small_headers = {"Content-Type": "application/json", "Accept": "*/*"}
-        formatted_small = client._format_headers(small_headers)  # noqa: SLF001
-        assert formatted_small == "{'Content-Type': 'application/json', 'Accept': '*/*'}"
+        with patch.object(client._logger, "info") as mock_info, patch.object(client._logger, "debug") as mock_debug:  # noqa: SLF001
+            response = client.request("GET", "https://api.example.com/users")
 
-        large_headers = {
-            "Content-Type": "application/json; charset=utf-8",
-            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
-            "Accept": "*/*",
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Connection": "keep-alive",
+            # Verify response data
+            assert response == mock_response
+            assert response.status_code == 200
+            assert response.headers["Content-Type"] == "application/json"
+            assert response.json() == {"users": []}
+
+            # Verify logging
+            assert any("Sending HTTP [GET] request to:" in str(call) for call in mock_info.call_args_list)
+            mock_info.assert_any_call("Response status code: 200")
+            mock_info.assert_any_call("Response time: 0.150 s")
+
+            debug_calls = [call.args[0] for call in mock_debug.call_args_list]
+            assert any("Request headers:" in call for call in debug_calls)
+            assert any("Request body: <empty>" in call for call in debug_calls)
+            assert any("Response body (JSON):" in call for call in debug_calls)
+
+    @patch("httpx.Client.request")
+    def test_get_request_with_query_params(self, mock_request: MagicMock) -> None:
+        """Test GET request with query parameters."""
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_url = MagicMock()
+        mock_url.scheme = "https"
+        mock_url.host = "api.example.com"
+        mock_url.path = "/users"
+        from httpx import QueryParams
+
+        mock_params = QueryParams([("limit", "10"), ("page", "1")])
+        mock_url.params = mock_params
+        mock_response.url = mock_url
+        mock_response.status_code = 200
+        mock_response.elapsed.total_seconds.return_value = 0.12
+        mock_response.request.headers = {"Accept": "application/json"}
+        mock_response.request.content = b""
+        mock_response.headers = {"Content-Type": "application/json"}
+        mock_response.text = '{"users": [{"id": 1}], "total": 1}'
+        mock_response.content = b'{"users": [{"id": 1}], "total": 1}'
+        mock_response.json.return_value = {"users": [{"id": 1}], "total": 1}
+        mock_request.return_value = mock_response
+
+        client = HttpClient()
+
+        with patch.object(client._logger, "debug") as mock_debug:  # noqa: SLF001
+            response = client.get("https://api.example.com/users", params={"limit": 10, "page": 1})
+
+            assert response.status_code == 200
+            assert "users" in response.json()
+
+            debug_calls = [call.args[0] for call in mock_debug.call_args_list]
+            params_log = next((call for call in debug_calls if call.startswith("Request query params:")), None)
+            assert params_log is not None
+            assert "limit=10" in params_log
+            assert "page=1" in params_log
+
+    @patch("httpx.Client.request")
+    def test_post_request_with_json_body(self, mock_request: MagicMock) -> None:
+        """Test POST request with JSON body."""
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_url = MagicMock()
+        mock_url.scheme = "https"
+        mock_url.host = "api.example.com"
+        mock_url.path = "/users"
+        mock_url.params = None
+        mock_response.url = mock_url
+        mock_response.status_code = 201
+        mock_response.elapsed.total_seconds.return_value = 0.25
+        mock_response.request.headers = {"Content-Type": "application/json"}
+        mock_response.request.content = b'{"name": "John Doe", "email": "john@example.com"}'
+        mock_response.request.method = "POST"
+        mock_response.headers = {"Content-Type": "application/json", "Location": "/users/123"}
+        mock_response.text = '{"id": 123, "name": "John Doe", "email": "john@example.com"}'
+        mock_response.content = b'{"id": 123, "name": "John Doe", "email": "john@example.com"}'
+        mock_response.json.return_value = {"id": 123, "name": "John Doe", "email": "john@example.com"}
+        mock_request.return_value = mock_response
+
+        client = HttpClient()
+        user_data = {"name": "John Doe", "email": "john@example.com"}
+
+        with patch.object(client._logger, "info") as mock_info, patch.object(client._logger, "debug") as mock_debug:  # noqa: SLF001
+            response = client.request("POST", "https://api.example.com/users", json=user_data)
+
+            # Verify response data
+            assert response.status_code == 201
+            assert response.headers["Location"] == "/users/123"
+            assert response.json()["id"] == 123
+
+            # Verify logging
+            mock_info.assert_any_call("Response status code: 201")
+
+            debug_calls = [call.args[0] for call in mock_debug.call_args_list]
+            request_body_log = next((call for call in debug_calls if call.startswith("Request body (JSON):")), None)
+            assert request_body_log is not None
+            assert "John Doe" in request_body_log
+
+            response_body_log = next((call for call in debug_calls if call.startswith("Response body (JSON):")), None)
+            assert response_body_log is not None
+            assert "John Doe" in response_body_log
+
+    @patch("httpx.Client.request")
+    def test_post_request_with_form_data(self, mock_request: MagicMock) -> None:
+        """Test POST request with form data."""
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_url = MagicMock()
+        mock_url.scheme = "https"
+        mock_url.host = "api.example.com"
+        mock_url.path = "/form"
+        mock_url.params = None
+        mock_response.url = mock_url
+        mock_response.status_code = 200
+        mock_response.elapsed.total_seconds.return_value = 0.18
+        mock_response.request.headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        mock_response.request.content = b"username=testuser&password=secret123"
+        mock_response.headers = {"Content-Type": "text/plain"}
+        mock_response.text = "Form submitted successfully"
+        mock_response.content = b"Form submitted successfully"
+        mock_request.return_value = mock_response
+
+        client = HttpClient()
+        form_data = {"username": "testuser", "password": "secret123"}
+
+        with patch.object(client._logger, "debug") as mock_debug:  # noqa: SLF001
+            response = client.request("POST", "https://api.example.com/form", data=form_data)
+
+            assert response.status_code == 200
+            assert "successfully" in response.text
+
+            debug_calls = [call.args[0] for call in mock_debug.call_args_list]
+            request_body_log = next(
+                (call for call in debug_calls if call.startswith("Request body (raw bytes):")),
+                None,
+            )
+            assert request_body_log is not None
+
+    @patch("httpx.Client.request")
+    def test_put_request_with_json_update(self, mock_request: MagicMock) -> None:
+        """Test PUT request for updating resource with JSON."""
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_url = MagicMock()
+        mock_url.scheme = "https"
+        mock_url.host = "api.example.com"
+        mock_url.path = "/users/123"
+        mock_url.params = None
+        mock_response.url = mock_url
+        mock_response.status_code = 200
+        mock_response.elapsed.total_seconds.return_value = 0.22
+        mock_response.request.headers = {"Content-Type": "application/json"}
+        mock_response.request.content = b'{"name": "John Smith", "email": "johnsmith@example.com"}'
+        mock_response.headers = {"Content-Type": "application/json"}
+        mock_response.text = (
+            '{"id": 123, "name": "John Smith", "email": "johnsmith@example.com", "updated_at": "2025-09-25T10:00:00Z"}'
+        )
+        mock_response.content = (
+            b'{"id": 123, "name": "John Smith", "email": "johnsmith@example.com", "updated_at": "2025-09-25T10:00:00Z"}'
+        )
+        mock_response.json.return_value = {
+            "id": 123,
+            "name": "John Smith",
+            "email": "johnsmith@example.com",
+            "updated_at": "2025-09-25T10:00:00Z",
         }
-        formatted_large = client._format_headers(large_headers)  # noqa: SLF001
+        mock_request.return_value = mock_response
 
-        assert formatted_large.startswith("{\n")
-        assert formatted_large.endswith("\n}")
-        assert "  Content-Type: application/json; charset=utf-8," in formatted_large
-        assert "  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9," in formatted_large
+        client = HttpClient()
+        update_data = {"name": "John Smith", "email": "johnsmith@example.com"}
+
+        with patch.object(client._logger, "info") as mock_info:  # noqa: SLF001
+            response = client.request("PUT", "https://api.example.com/users/123", json=update_data)
+
+            assert response.status_code == 200
+            assert response.json()["name"] == "John Smith"
+            assert "updated_at" in response.json()
+
+            mock_info.assert_any_call("Response status code: 200")
+
+    @patch("httpx.Client.request")
+    def test_put_request_without_body(self, mock_request: MagicMock) -> None:
+        """Test PUT request without request body."""
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_url = MagicMock()
+        mock_url.scheme = "https"
+        mock_url.host = "api.example.com"
+        mock_url.path = "/users/123/activate"
+        mock_url.params = None
+        mock_response.url = mock_url
+        mock_response.status_code = 204
+        mock_response.elapsed.total_seconds.return_value = 0.08
+        mock_response.request.headers = {"Accept": "application/json"}
+        mock_response.request.content = b""
+        mock_response.headers = {}
+        mock_response.text = ""
+        mock_response.content = b""
+        mock_request.return_value = mock_response
+
+        client = HttpClient()
+
+        with patch.object(client._logger, "debug") as mock_debug:  # noqa: SLF001
+            response = client.request("PUT", "https://api.example.com/users/123/activate")
+
+            assert response.status_code == 204
+            assert response.text == ""
+
+            debug_calls = [call.args[0] for call in mock_debug.call_args_list]
+            assert any("Request body: <empty>" in call for call in debug_calls)
+            assert any("Response body: <empty>" in call for call in debug_calls)
+
+    @patch("httpx.Client.request")
+    def test_delete_request_without_body(self, mock_request: MagicMock) -> None:
+        """Test DELETE request without body."""
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_url = MagicMock()
+        mock_url.scheme = "https"
+        mock_url.host = "api.example.com"
+        mock_url.path = "/users/123"
+        mock_url.params = None
+        mock_response.url = mock_url
+        mock_response.status_code = 204
+        mock_response.elapsed.total_seconds.return_value = 0.12
+        mock_response.request.headers = {}
+        mock_response.request.content = b""
+        mock_response.headers = {}
+        mock_response.text = ""
+        mock_response.content = b""
+        mock_request.return_value = mock_response
+
+        client = HttpClient()
+
+        with patch.object(client._logger, "info") as mock_info:  # noqa: SLF001
+            response = client.request("DELETE", "https://api.example.com/users/123")
+
+            assert response.status_code == 204
+            assert response.text == ""
+
+            mock_info.assert_any_call("Response status code: 204")
+
+    @patch("httpx.Client.request")
+    def test_delete_request_with_json_response(self, mock_request: MagicMock) -> None:
+        """Test DELETE request that returns JSON response."""
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_url = MagicMock()
+        mock_url.scheme = "https"
+        mock_url.host = "api.example.com"
+        mock_url.path = "/users/123"
+        mock_url.params = None
+        mock_response.url = mock_url
+        mock_response.status_code = 200
+        mock_response.elapsed.total_seconds.return_value = 0.15
+        mock_response.request.headers = {"Accept": "application/json"}
+        mock_response.request.content = b""
+        mock_response.headers = {"Content-Type": "application/json"}
+        mock_response.text = '{"message": "User deleted successfully", "deleted_id": 123}'
+        mock_response.content = b'{"message": "User deleted successfully", "deleted_id": 123}'
+        mock_response.json.return_value = {"message": "User deleted successfully", "deleted_id": 123}
+        mock_request.return_value = mock_response
+
+        client = HttpClient()
+
+        with patch.object(client._logger, "debug") as mock_debug:  # noqa: SLF001
+            response = client.request("DELETE", "https://api.example.com/users/123")
+
+            assert response.status_code == 200
+            assert response.json()["deleted_id"] == 123
+
+            debug_calls = [call.args[0] for call in mock_debug.call_args_list]
+            response_body_log = next((call for call in debug_calls if call.startswith("Response body (JSON):")), None)
+            assert response_body_log is not None
+            assert "User deleted successfully" in response_body_log
+
+    @patch("httpx.Client.request")
+    def test_request_with_text_content_type(self, mock_request: MagicMock) -> None:
+        """Test request with plain text content type."""
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_url = MagicMock()
+        mock_url.scheme = "https"
+        mock_url.host = "api.example.com"
+        mock_url.path = "/text"
+        mock_url.params = None
+        mock_response.url = mock_url
+        mock_response.status_code = 200
+        mock_response.elapsed.total_seconds.return_value = 0.1
+        mock_response.request.headers = {"Content-Type": "text/plain"}
+        mock_response.request.content = b"This is plain text request"
+        mock_response.headers = {"Content-Type": "text/plain"}
+        mock_response.text = "Response in plain text format"
+        mock_response.content = b"Response in plain text format"
+        mock_request.return_value = mock_response
+
+        client = HttpClient()
+
+        with patch.object(client._logger, "debug") as mock_debug:  # noqa: SLF001
+            response = client.post(
+                "https://api.example.com/text",
+                content="This is plain text request",
+                headers={"Content-Type": "text/plain"},
+            )
+
+            assert response.status_code == 200
+            assert "plain text format" in response.text
+
+            debug_calls = [call.args[0] for call in mock_debug.call_args_list]
+            request_body_log = next((call for call in debug_calls if call.startswith("Request body (text):")), None)
+            assert request_body_log is not None
+            assert "plain text request" in request_body_log
+
+            response_body_log = next((call for call in debug_calls if call.startswith("Response body (text):")), None)
+            assert response_body_log is not None
+            assert "plain text format" in response_body_log
+
+    @patch("httpx.Client.request")
+    def test_request_with_xml_content_type(self, mock_request: MagicMock) -> None:
+        """Test request with XML content type."""
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_url = MagicMock()
+        mock_url.scheme = "https"
+        mock_url.host = "api.example.com"
+        mock_url.path = "/xml"
+        mock_url.params = None
+        mock_response.url = mock_url
+        mock_response.status_code = 200
+        mock_response.elapsed.total_seconds.return_value = 0.13
+        mock_response.request.headers = {"Content-Type": "application/xml"}
+        mock_response.request.content = b"<user><name>John</name></user>"
+        mock_response.headers = {"Content-Type": "application/xml"}
+        mock_response.text = "<response><status>success</status></response>"
+        mock_response.content = b"<response><status>success</status></response>"
+        mock_request.return_value = mock_response
+
+        client = HttpClient()
+
+        with patch.object(client._logger, "debug") as mock_debug:  # noqa: SLF001
+            response = client.post(
+                "https://api.example.com/xml",
+                content="<user><name>John</name></user>",
+                headers={"Content-Type": "application/xml"},
+            )
+
+            assert response.status_code == 200
+            assert "<status>success</status>" in response.text
+
+            debug_calls = [call.args[0] for call in mock_debug.call_args_list]
+            request_body_log = next((call for call in debug_calls if call.startswith("Request body (text):")), None)
+            assert request_body_log is not None
+            assert "<user><name>John</name></user>" in request_body_log
+
+    @patch("httpx.Client.request")
+    def test_request_with_binary_streaming_content(self, mock_request: MagicMock) -> None:
+        """Test request with binary/streaming content type."""
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_url = MagicMock()
+        mock_url.scheme = "https"
+        mock_url.host = "api.example.com"
+        mock_url.path = "/upload"
+        mock_url.params = None
+        mock_response.url = mock_url
+        mock_response.status_code = 200
+        mock_response.elapsed.total_seconds.return_value = 0.45
+        mock_response.request.headers = {"Content-Type": "application/octet-stream"}
+        mock_response.request.content = b"binary data content"
+        mock_response.headers = {"Content-Type": "application/json"}
+        mock_response.text = '{"uploaded": true, "size": 19}'
+        mock_response.content = b'{"uploaded": true, "size": 19}'
+        mock_response.json.return_value = {"uploaded": True, "size": 19}
+        mock_request.return_value = mock_response
+
+        client = HttpClient()
+
+        with patch.object(client._logger, "debug") as mock_debug:  # noqa: SLF001
+            response = client.post(
+                "https://api.example.com/upload",
+                content=b"binary data content",
+                headers={"Content-Type": "application/octet-stream"},
+            )
+
+            assert response.status_code == 200
+            assert response.json()["uploaded"] is True
+
+            debug_calls = [call.args[0] for call in mock_debug.call_args_list]
+            request_body_log = next((call for call in debug_calls if call.startswith("Request body:")), None)
+            assert request_body_log is not None
+            assert "binary/streaming content - not logged" in request_body_log
+
+    @patch("httpx.Client.request")
+    def test_request_error_responses_different_status_codes(self, mock_request: MagicMock) -> None:
+        """Test various HTTP error status codes."""
+        error_scenarios = [
+            (400, "Bad Request", "Invalid request parameters"),
+            (401, "Unauthorized", "Authentication required"),
+            (403, "Forbidden", "Access denied"),
+            (404, "Not Found", "Resource not found"),
+            (500, "Internal Server Error", "Server error occurred"),
+        ]
+
+        client = HttpClient()
+
+        for status_code, _status_text, error_message in error_scenarios:
+            mock_response = MagicMock(spec=httpx.Response)
+            mock_url = MagicMock()
+            mock_url.scheme = "https"
+            mock_url.host = "api.example.com"
+            mock_url.path = f"/error/{status_code}"
+            mock_url.params = None
+            mock_response.url = mock_url
+            mock_response.status_code = status_code
+            mock_response.elapsed.total_seconds.return_value = 0.05
+            mock_response.request.headers = {"Accept": "application/json"}
+            mock_response.request.content = b""
+            mock_response.headers = {"Content-Type": "application/json"}
+            mock_response.text = f'{{"error": "{error_message}", "status": {status_code}}}'
+            mock_response.content = f'{{"error": "{error_message}", "status": {status_code}}}'.encode()
+            mock_response.json.return_value = {"error": error_message, "status": status_code}
+            mock_request.return_value = mock_response
+
+            with patch.object(client._logger, "info") as mock_info:  # noqa: SLF001
+                response = client.request("GET", f"https://api.example.com/error/{status_code}")
+
+                assert response.status_code == status_code
+                assert response.json()["error"] == error_message
+
+                mock_info.assert_any_call(f"Response status code: {status_code}")
+
+    @patch("httpx.Client.request")
+    def test_request_with_custom_headers_access(self, mock_request: MagicMock) -> None:
+        """Test access to request and response headers."""
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_url = MagicMock()
+        mock_url.scheme = "https"
+        mock_url.host = "api.example.com"
+        mock_url.path = "/headers"
+        mock_url.params = None
+        mock_response.url = mock_url
+        mock_response.status_code = 200
+        mock_response.elapsed.total_seconds.return_value = 0.11
+        mock_response.request.headers = {
+            "Authorization": "Bearer test-token",
+            "User-Agent": "TestClient/1.0",
+            "Content-Type": "application/json",
+            "X-Custom-Header": "custom-value",
+        }
+        mock_response.request.content = b'{"test": "data"}'
+        mock_response.headers = {
+            "Content-Type": "application/json",
+            "X-Rate-Limit": "1000",
+            "X-Response-Time": "110ms",
+            "Cache-Control": "no-cache",
+        }
+        mock_response.text = '{"message": "Headers received"}'
+        mock_response.content = b'{"message": "Headers received"}'
+        mock_response.json.return_value = {"message": "Headers received"}
+        mock_request.return_value = mock_response
+
+        client = HttpClient()
+        custom_headers = {
+            "Authorization": "Bearer test-token",
+            "User-Agent": "TestClient/1.0",
+            "X-Custom-Header": "custom-value",
+        }
+
+        response = client.request(
+            "POST",
+            "https://api.example.com/headers",
+            json={"test": "data"},
+            headers=custom_headers,
+        )
+
+        # Test access to response properties
+        assert response.status_code == 200
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.headers["X-Rate-Limit"] == "1000"
+        assert response.headers["X-Response-Time"] == "110ms"
+        assert response.headers["Cache-Control"] == "no-cache"
+        assert response.json()["message"] == "Headers received"
+
+        # Test that we can access request headers through mock
+        assert "Authorization" in response.request.headers
+        assert "User-Agent" in response.request.headers

@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2025-09-25
+
+### Enhanced
+- 🔒 **Sensitive data masking** - comprehensive masking for headers, JSON fields, and text patterns in HTTP/GraphQL clients
+- 🌐 **HttpClient & GraphQLClient** - unified BaseHttpClient architecture with enhanced logging and data sanitization
+- 📝 **Documentation** - updated API documentation with complete parameter descriptions and sensitive data masking features
+- 🔗 **README links** - fixed GitHub documentation links to use absolute URLs
+
+### Added
+- 🛡️ **New configuration options** for HttpClient and GraphQLClient:
+  - `sensitive_headers` - set of header names to mask in logs
+  - `sensitive_json_fields` - set of JSON field names to mask
+  - `sensitive_text_patterns` - regex patterns for text masking
+  - `mask_sensitive_data` - toggle for sensitive data masking
+
+### Fixed
+- 🧪 **Test improvements** - enhanced test coverage for logging assertions and header sanitization
+- 📊 **GraphQL client** - removed unnecessary mocks and improved test assertions
+- 🔧 **Import organization** - refactored client imports for better maintainability
+
 ## [0.1.3] - 2025-09-24
 
 ### Fixed
@@ -59,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable attachment size limits
 - Professional report styling with responsive design
 
+[0.1.4]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.4
 [0.1.3]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.3
 [0.1.2]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.2
 [0.1.1]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.1
