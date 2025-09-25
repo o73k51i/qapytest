@@ -17,18 +17,23 @@ This document describes the public APIs exported by the `QaPyTest` package inten
 ### Integration clients
 
 #### `HttpClient`
-- Signature: `HttpClient(base_url: str = "", verify: bool = True, timeout: float = 10.0, **kwargs)` — subclass of `httpx.Client`
-- Description: full-featured HTTP client with automatic request/response logging
+- Signature: `HttpClient(base_url: str = "", headers: dict[str, str] | None = None, verify: bool = True, timeout: float = 10.0, sensitive_headers: set[str] | None = None, sensitive_json_fields: set[str] | None = None, sensitive_text_patterns: list[str] | None = None, mask_sensitive_data: bool = True, **kwargs)` — subclass of `httpx.Client`
+- Description: full-featured HTTP client with automatic request/response logging and sensitive data masking
 - Logging: automatically logs requests, responses, durations and status codes via the `HttpClient` logger
 - Methods: all `httpx.Client` methods (`get`, `post`, `put`, `delete`, `patch`, `request`)
-- Features: context manager support, automatic suppression of internal httpx/httpcore loggers
+- Features: context manager support, automatic suppression of internal httpx/httpcore loggers, sensitive data masking
 - Example:
 
 ```python
 from qapytest import HttpClient
 
-# Use as a regular httpx.Client with logging
-client = HttpClient(base_url="https://jsonplaceholder.typicode.com", timeout=30)
+# Use as a regular httpx.Client with logging and sensitive data masking
+client = HttpClient(
+    base_url="https://jsonplaceholder.typicode.com", 
+    timeout=30,
+    headers={"Authorization": "Bearer token"},
+    mask_sensitive_data=True
+)
 response = client.get("/posts/1")
 assert response.status_code == 200
 
@@ -38,12 +43,12 @@ with HttpClient(base_url="https://api.example.com") as client:
 ```
 
 #### `GraphQLClient`
-- Signature: `GraphQLClient(endpoint_url: str, timeout: float = 10.0, headers: dict | None = None, **kwargs)`
-- Description: specialized client for GraphQL APIs with automatic logging of requests and responses
+- Signature: `GraphQLClient(endpoint_url: str, headers: dict[str, str] | None = None, verify: bool = True, timeout: float = 10.0, sensitive_headers: set[str] | None = None, sensitive_json_fields: set[str] | None = None, sensitive_text_patterns: list[str] | None = None, mask_sensitive_data: bool = True, **kwargs)`
+- Description: specialized client for GraphQL APIs with automatic logging of requests and responses and sensitive data masking
 - Logging: records GraphQL queries, variables, response time and status via the `GraphQLClient` logger
 - Methods:
-  - `execute(query: str, variables: dict | None = None, operation_name: str | None = None) -> httpx.Response`
-- Features: automatic POST request formation, variable logging, headers support
+  - `execute(query: str, variables: dict | None = None) -> httpx.Response`
+- Features: automatic POST request formation, variable logging, headers support, sensitive data masking
 - Example:
 
 ```python
@@ -51,7 +56,10 @@ from qapytest import GraphQLClient
 
 client = GraphQLClient(
   endpoint_url="https://spacex-production.up.railway.app/",
-  headers={"Authorization": "Bearer token"}
+  headers={"Authorization": "Bearer token"},
+  verify=True,
+  timeout=15.0,
+  mask_sensitive_data=True
 )
 
 query = """
