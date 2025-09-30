@@ -8,10 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.6] - 2025-09-30
 
 ### Fixed
-
 - 🔴 **RedisClient** - improved connection handling and management
 - 🔧 **Configuration** - fixed Redis client configuration and connection parameters
- - 🔇 **HTTP library logging** - suppressed verbose logging from httpx, httpcore, and urllib3 to WARNING level to reduce noise in test output
+- 🔇 **HTTP library logging** - suppressed verbose logging from httpx, httpcore, and urllib3 to WARNING level to reduce noise in test output
 
 ## [0.1.5] - 2025-09-25
 
