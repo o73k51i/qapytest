@@ -1,31 +1,26 @@
 """Module for convenient interaction with Redis."""
 
-import json
 import logging
 
 import redis
-from redis.exceptions import RedisError
-
-from qapytest import _config as cfg
 
 
-class RedisClient:
-    """Client for convenient interaction with Redis.
+class RedisClient(redis.Redis):
+    """Client for convenient interaction with Redis with enhanced logging.
 
-    This class is a wrapper around the `redis-py` library and provides simple
-    methods for performing basic operations (get, set, delete) with
-    additional logging and automatic serialization/deserialization
-    of data in JSON format.
+    This class extends the `redis-py` Redis client by adding comprehensive
+    logging for all Redis commands. It logs each command execution at INFO level
+    and results at DEBUG level, making it easier to trace Redis operations
+    during development and debugging.
 
-    It simplifies working with Redis by hiding the details of data encoding
-    and connection handling.
+    The client inherits all functionality from the standard Redis client,
+    so you can use any Redis command available in the `redis-py` library.
 
     Args:
-        host: Redis server address. Default is "localhost".
+        host: Redis server address.
         port: Redis server port. Default is 6379.
-        db: Database number to connect to. Default is 0.
         **kwargs: Other keyword arguments passed directly to the
-                  `redis.Redis` constructor (e.g., `password`, `ssl`).
+                  `redis.Redis` constructor (e.g., `password`, `ssl`, `db`).
 
     ---
     ### Example usage:
@@ -34,145 +29,84 @@ class RedisClient:
     # Initialize the client
     redis_client = RedisClient(host='localhost', port=6379, db=0)
 
-    # 1. Save a simple string
-    redis_client.set_value('user:1:status', 'active', ex=3600) # ex - time-to-live in seconds
+    # 1. Save a simple string value
+    redis_client.set('user:1:status', 'active', ex=3600)  # ex - time-to-live in seconds
 
-    # 2. Retrieve the string
-    status = redis_client.get_value('user:1:status')
-    print(f"User status: {status}") # >>> User status: active
+    # 2. Retrieve the string value
+    status = redis_client.get('user:1:status')
+    print(f"User status: {status}")  # >>> User status: b'active'
 
-    # 3. Save a dictionary (automatically converted to JSON)
+    # 3. Save a JSON string (manual serialization)
+    import json
     user_data = {'name': 'User', 'email': 'user@example.com'}
-    redis_client.set_value('user:1:data', user_data)
+    redis_client.set('user:1:data', json.dumps(user_data))
 
-    # 4. Retrieve and deserialize the dictionary
-    retrieved_data = redis_client.get_value('user:1:data')
-    print(f"User data: {retrieved_data}") # >>> User data: {'name': 'User', 'email': 'user@example.com'}
+    # 4. Retrieve and deserialize the JSON data
+    retrieved_data = json.loads(redis_client.get('user:1:data'))
+    print(f"User data: {retrieved_data}")  # >>> User data: {'name': 'User', 'email': 'user@example.com'}
 
     # 5. Check if a key exists and delete it
-    if redis_client.key_exists('user:1:status'):
+    if redis_client.exists('user:1:status'):
         print("Key 'user:1:status' exists.")
-        redis_client.delete_key('user:1:status')
+        redis_client.delete('user:1:status')
         print("Key deleted.")
 
     # 6. Check a non-existent key
-    non_existent = redis_client.get_value('user:1:non_existent')
-    print(f"Non-existent key: {non_existent}") # >>> Non-existent key: None
+    non_existent = redis_client.get('user:1:non_existent')
+    print(f"Non-existent key: {non_existent}")  # >>> Non-existent key: None
+
+    # 7. Working with lists
+    redis_client.lpush('tasks', 'task1', 'task2', 'task3')
+    task = redis_client.rpop('tasks')
+    print(f"Retrieved task: {task}")  # >>> Retrieved task: b'task1'
+
+    # 8. Working with sets
+    redis_client.sadd('users:active', 'user1', 'user2', 'user3')
+    is_member = redis_client.sismember('users:active', 'user1')
+    print(f"User1 is active: {is_member}")  # >>> User1 is active: True
     ```
     """
 
-    def __init__(self, host: str = "localhost", port: int = 6379, db: int = 0, **kwargs) -> None:
+    def __init__(self, host: str, port: int = 6379, **kwargs) -> None:
         """Constructor for RedisClient.
 
         Args:
-            host: Redis server address. Default is "localhost".
+            host: Redis server address.
             port: Redis server port. Default is 6379.
-            db: Database number to connect to. Default is 0.
             **kwargs: Other keyword arguments passed directly to the
                       `redis.Redis` constructor (e.g., `password`, `ssl`).
         """
+        super().__init__(host=host, port=port, **kwargs)
         self._logger = logging.getLogger("RedisClient")
+        for name in ("redis", "redis.connection", "redis.client"):
+            logging.getLogger(name).setLevel(logging.WARNING)
 
-        logging.getLogger("redis").setLevel(logging.WARNING)
-
-        try:
-            self._client = redis.Redis(host=host, port=port, db=db, **kwargs)
-            self._client.ping()
-        except RedisError as e:
-            self._logger.error(f"Failed to connect to Redis: {e}")
-            raise
-
-    def set_value(self, key: str, value: cfg.AnyType, ex: int | None = None) -> bool:
-        """Stores a value by key, automatically serializing it.
-
-        Args:
-            key: The key under which the value is stored.
-            value: The value to store. Dictionaries and lists
-                   are automatically converted to JSON.
-            ex: Time-to-live of the key in seconds.
-
-        Returns:
-            True if the operation is successful, otherwise False.
-        """
-        try:
-            if isinstance(value, dict | list):
-                processed_value = json.dumps(value, ensure_ascii=False)
-            elif isinstance(value, bytes):
-                processed_value = value
+    def execute_command(self, *args, **kwargs) -> object:
+        parts = []
+        for arg in args:
+            if isinstance(arg, str):
+                parts.append(f'"{arg}"')
+            elif isinstance(arg, bytes | bytearray):
+                try:
+                    parts.append(f'"{arg.decode()}"')
+                except Exception:
+                    parts.append(repr(arg))
             else:
-                processed_value = str(value)
+                parts.append(str(arg))
 
-            self._client.set(key, processed_value, ex=ex)
-            self._logger.info(f"SET: Key '{key}' successfully saved (ex={ex}s).")
-            return True
-        except RedisError as e:
-            self._logger.error(f"Error during SET operation for key '{key}': {e}")
-            return False
+        command = " ".join(parts)
+        self._logger.info(f"Command: {command}")
 
-    def get_value(self, key: str) -> cfg.AnyType:
-        """Retrieves and automatically deserializes the value by key.
-
-        Args:
-            key: The key to retrieve the value for.
-
-        Returns:
-            The stored value. If the value was in JSON format,
-            it will be deserialized. If the key is not found, returns None.
-        """
         try:
-            value_bytes = self._client.get(key)
-            if value_bytes is None:
-                self._logger.info(f"GET: Key '{key}' not found.")
-                return None
-
-            value_str = value_bytes.decode("utf-8")  # type: ignore
-
-            try:
-                deserialized_value = json.loads(value_str)
-                self._logger.info(f"GET: Key '{key}' found and deserialized from JSON.")
-                self._logger.debug(f"Deserialized value: {deserialized_value}")
-                return deserialized_value
-            except json.JSONDecodeError:
-                self._logger.info(f"GET: Key '{key}' found (plain string).")
-                self._logger.debug(f"String value: {value_str}")
-                return value_str
-        except RedisError as e:
-            self._logger.error(f"Error during GET operation for key '{key}': {e}")
-            return None
-
-    def delete_key(self, key: str) -> bool:
-        """Deletes a key from Redis.
-
-        Args:
-            key: The key to delete.
-
-        Returns:
-            True if the key was found and deleted, otherwise False.
-        """
-        try:
-            deleted_count = self._client.delete(key)
-            if deleted_count > 0:  # type: ignore
-                self._logger.info(f"DELETE: Key '{key}' successfully deleted.")
-                return True
-            self._logger.info(f"DELETE: Key '{key}' not found for deletion.")
-            return False
-        except RedisError as e:
-            self._logger.error(f"Error during DELETE operation for key '{key}': {e}")
-            return False
-
-    def key_exists(self, key: str) -> bool:
-        """Checks if a key exists in Redis.
-
-        Args:
-            key: The key to check.
-
-        Returns:
-            True if the key exists, otherwise False.
-        """
-        try:
-            exists = self._client.exists(key) > 0  # type: ignore
-            self._logger.info(f"EXISTS: Key '{key}' check: {'found' if exists else 'not found'}.")
-            return exists
-        except RedisError as e:
-            self._logger.error(f"Error during EXISTS operation for key '{key}': {e}")
-            return False
+            result = super().execute_command(*args, **kwargs)
+            if isinstance(result, bytes | bytearray):
+                try:
+                    self._logger.debug(f'Executed: "{result.decode()}"')
+                except Exception:
+                    self._logger.debug(f"Executed: {result!r}")
+            else:
+                self._logger.debug(f"Executed: {result}")
+            return result
+        except Exception as e:
+            self._logger.error(f"Command '{command}' failed: {e}")
+            raise
