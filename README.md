@@ -27,7 +27,7 @@ Turn your ordinary tests into detailed, structured reports with built-in HTTP, S
 - **Attachments:** ability to add files, logs and screenshots to test reports.
 - **HTTP client:** client for performing HTTP requests.
 - **SQL client:** client for executing raw SQL queries.
-- **Redis client:** client for working with Redis with automatic JSON (de)serialization.
+- **Redis client:** client for working with Redis.
 - **GraphQL client:** client for executing GraphQL requests.
 - **JSON Schema validation:** function to validate API responses or test artifacts with support for soft-assert and strict mode.
 
@@ -100,11 +100,12 @@ gql = GraphQLClient("https://api.github.com/graphql",
 result = gql.execute("query { viewer { login } }")
 ```
 
-### 🔴 RedisClient — Caching and sessions under control
+### 🔴 RedisClient — Enhanced Redis operations with logging
 ```python
-redis = RedisClient(host="localhost", port=6379)
-redis.set_value("session:123", {"user_id": 1, "expires": "2024-01-01"})
-session_data = redis.get_value("session:123")  # Automatic JSON serialization!
+import json
+redis_client = RedisClient(host="localhost", port=6379, db=0)
+redis_client.set("session:123", json.dumps({"user_id": 1, "expires": "2024-01-01"}))
+session_data = json.loads(redis_client.get("session:123"))
 ```
 
 ## 🎛️ Core testing tools

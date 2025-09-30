@@ -27,8 +27,8 @@ class BaseHttpClient(Client):
     ) -> None:
         """Constructor for BaseHttpClient."""
         super().__init__(base_url=base_url, headers=headers, verify=verify, timeout=timeout, **kwargs)
-        logging.getLogger("httpx").setLevel(logging.WARNING)
-        logging.getLogger("httpcore").setLevel(logging.WARNING)
+        for name in ("httpx", "httpcore", "urllib3"):
+            logging.getLogger(name).setLevel(logging.WARNING)
         self._logger = logging.getLogger(name_logger)
         self._mask_sensitive_data = mask_sensitive_data
 

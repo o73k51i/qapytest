@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] - 2025-09-30
+
+### Fixed
+- 🔴 **RedisClient** - improved connection handling and management
+- 🔧 **Configuration** - fixed Redis client configuration and connection parameters
+- 🔇 **HTTP library logging** - suppressed verbose logging from httpx, httpcore, and urllib3 to WARNING level to reduce noise in test output
+
 ## [0.1.5] - 2025-09-25
 
 ### Fixed
@@ -85,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable attachment size limits
 - Professional report styling with responsive design
 
+[0.1.6]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.6
 [0.1.5]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.5
 [0.1.4]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.4
 [0.1.3]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.3
