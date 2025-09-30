@@ -6,7 +6,7 @@ This document describes the public APIs exported by the `QaPyTest` package inten
 - `HttpClient` — HTTP client
 - `GraphQLClient` — GraphQL client
 - `SqlClient` — SQL client
-- `RedisClient` — Redis client with automatic JSON serialization
+- `RedisClient` — Redis client
 
 ## [Test organization helpers](#test-organization-helpers)
 - `step(message)` — context manager for structuring tests
@@ -107,34 +107,44 @@ success = db.execute_and_commit(
 Note: A corresponding DB driver is required (psycopg2, pymysql, sqlite3). [See list of supported dialects](https://docs.sqlalchemy.org/en/20/dialects/index.html).
 
 #### `RedisClient`
-- Constructor: `RedisClient(host: str = "localhost", port: int = 6379, db: int = 0, **kwargs)`
-- Description: Redis client with automatic JSON serialization and detailed operation logging
-- Logging: logs all SET/GET/DELETE operations with keys, values and TTL via the `RedisClient` logger
-- Serialization: automatically converts dict/list to JSON on save and back on retrieval
-- Methods:
-  - `set_value(key: str, value, ex: int | None = None) -> bool` — save with optional TTL
-  - `get_value(key: str) -> Any` — get with automatic JSON deserialization
-  - `delete_key(key: str) -> bool` — delete a key
-  - `key_exists(key: str) -> bool` — check existence
+- Constructor: `RedisClient(host: str, port: int = 6379, **kwargs)` — extends `redis.Redis` with enhanced logging
+- Description: Redis client wrapper that adds comprehensive logging for all Redis commands. Inherits all functionality from the standard `redis-py` library.
+- Logging: logs all Redis commands at INFO level and results at DEBUG level via the `RedisClient` logger
+- Methods: all standard `redis.Redis` methods (`set`, `get`, `delete`, `exists`, `lpush`, `rpop`, `sadd`, `sismember`, `hset`, `hget`, etc.)
+- Features: command execution logging, result logging, error logging, automatic suppression of internal redis loggers
 - Example:
 
 ```python
 from qapytest import RedisClient
+import json
 
-# Connect to Redis
-redis = RedisClient(host="localhost", port=6379, db=0)
+# Connect to Redis with enhanced logging
+redis_client = RedisClient(host="localhost", port=6379, db=0)
 
-# Automatic JSON serialization for complex objects
+# Use all standard Redis methods with automatic logging
+redis_client.set("user:123:status", "active", ex=3600)  # TTL 1 hour
+status = redis_client.get("user:123:status")  # Returns b"active"
+
+# Working with JSON data (manual serialization)
 user_data = {"id": 123, "name": "John", "roles": ["admin", "user"]}
-redis.set_value("user:123", user_data, ex=3600)  # TTL 1 hour
+redis_client.set("user:123:data", json.dumps(user_data))
+retrieved_data = json.loads(redis_client.get("user:123:data"))
 
-# Automatic deserialization on retrieval  
-retrieved_user = redis.get_value("user:123")  # Returns dict
-print(retrieved_user["name"])  # "John"
+# Standard Redis operations with logging
+if redis_client.exists("user:123:status"):
+    redis_client.delete("user:123:status")
 
-# Working with simple types
-redis.set_value("session:abc", "active")
-status = redis.get_value("session:abc")  # Returns string "active"
+# Working with lists
+redis_client.lpush("tasks", "task1", "task2", "task3")
+task = redis_client.rpop("tasks")  # Returns b"task1"
+
+# Working with sets  
+redis_client.sadd("users:active", "user1", "user2", "user3")
+is_member = redis_client.sismember("users:active", "user1")  # Returns True
+
+# Working with hashes
+redis_client.hset("user:123:profile", "name", "John")
+name = redis_client.hget("user:123:profile", "name")  # Returns b"John"
 ```
 
 ### JSON Schema Validation
