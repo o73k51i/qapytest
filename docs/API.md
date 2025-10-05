@@ -3,16 +3,16 @@
 This document describes the public APIs exported by the `QaPyTest` package intended for use in tests. All examples are short usage snippets.
 
 ## [Integration clients](#integration-clients)
-- `HttpClient` — HTTP client
-- `GraphQLClient` — GraphQL client
-- `SqlClient` — SQL client
-- `RedisClient` — Redis client
+- [`HttpClient`](#httpclient) — HTTP client
+- [`GraphQLClient`](#graphqlclient) — GraphQL client
+- [`SqlClient`](#sqlclient) — SQL client
+- [`RedisClient`](#redisclient) — Redis client
 
 ## [Test organization helpers](#test-organization-helpers)
-- `step(message)` — context manager for structuring tests
-- `soft_assert(condition, label, details)` — soft assertion that does not stop the test
-- `attach(data, label, mime)` — add attachments to reports
-- `validate_json(data, schema, schema_path, message, strict)` — JSON schema validation with soft-assert support
+- [`step(message)`](#stepmessage-str) — context manager for structuring tests
+- [`soft_assert(condition, label, details)`](#soft_assertcondition-label-detailsnone) — soft assertion that does not stop the test
+- [`attach(data, label, mime)`](#attachdata-label-mimenone) — add attachments to reports
+- [`validate_json(data, schema, schema_path, message, strict)`](#validate_json) — JSON schema validation with soft-assert support
 
 ### Integration clients
 
@@ -76,20 +76,26 @@ data = response.json()
 ```
 
 #### `SqlClient`
-- Constructor: `SqlClient(connection_string: str, **kwargs)` — creates a SQLAlchemy engine with logging
-- Description: client for executing raw SQL queries with automatic transaction management
-- Logging: logs all SQL queries, parameters, results and errors via the `SqlClient` logger
+- Constructor: `SqlClient(connection_string: str, mask_sensitive_data: bool = True, sensitive_data: set[str] | None = None, **kwargs)` — creates a SQLAlchemy engine with logging and sensitive data masking
+- Description: client for executing raw SQL queries with automatic transaction management and comprehensive logging
+- Logging: logs all SQL queries, parameters, results and errors via the `SqlClient` logger with automatic sensitive data masking
 - Methods:
   - `fetch_data(query: str, params: dict | None = None) -> list[dict]` — SELECT queries, returns list of dicts
-  - `execute_and_commit(query: str, params: dict | None = None) -> bool` — INSERT/UPDATE/DELETE with auto-commit
-- Features: safe parameterization, automatic rollback on errors
+  - `execute_query(query: str, params: list[dict[str, Any]] | dict[str, Any] | None = None, return_inserted_ids: bool = False) -> dict[str, Any]` — INSERT/UPDATE/DELETE with auto-commit, returns execution stats
+  - `fetch_single_value(query: str, params: dict | None = None) -> Any` — returns single value from first row (useful for COUNT, MAX, etc.)
+  - `close()` — close database connection and dispose engine
+- Features: safe parameterization, automatic rollback on errors, query validation, sensitive data masking, context manager support, batch operations support
 - Example:
 
 ```python
 from qapytest import SqlClient
 
-# Connect to the database
-db = SqlClient("postgresql://user:pass@localhost:5432/testdb")
+# Connect to the database with sensitive data masking
+db = SqlClient(
+  "postgresql://user:pass@localhost:5432/testdb",
+  mask_sensitive_data=True,
+  sensitive_data={"api_key", "auth_token"}
+)
 
 # Safe query execution with parameters
 users = db.fetch_data(
@@ -97,11 +103,40 @@ users = db.fetch_data(
   params={"status": True, "min_age": 18}
 )
 
-# Execute INSERT/UPDATE with automatic commit
-success = db.execute_and_commit(
+# Execute INSERT/UPDATE with detailed execution info
+result = db.execute_query(
   "INSERT INTO users (name, email) VALUES (:name, :email)",
   params={"name": "John", "email": "john@example.com"}
 )
+print(f"Inserted {result['rowcount']} rows, last ID: {result['last_inserted_id']}")
+
+# Batch insert with list of dictionaries
+batch_result = db.execute_query(
+  "INSERT INTO users (name, email) VALUES (:name, :email)",
+  params=[
+    {"name": "Alice", "email": "alice@example.com"},
+    {"name": "Bob", "email": "bob@example.com"}
+  ]
+)
+print(f"Batch inserted {batch_result['rowcount']} rows")
+
+# Get single values efficiently
+user_count = db.fetch_single_value("SELECT COUNT(*) FROM users WHERE active = true")
+max_age = db.fetch_single_value("SELECT MAX(age) FROM users")
+
+# PostgreSQL with RETURNING clause
+result = db.execute_query(
+  "INSERT INTO users (name) VALUES ('Alice'), ('Bob') RETURNING id",
+  return_inserted_ids=True
+)
+print(f"New user IDs: {result['inserted_ids']}")
+
+# Context manager support
+with SqlClient("sqlite:///:memory:") as db:
+    db.execute_query("CREATE TABLE test (id INTEGER, name TEXT)")
+    db.execute_query("INSERT INTO test VALUES (1, 'Test')")
+    data = db.fetch_data("SELECT * FROM test")
+# Connection automatically closed
 ```
 
 Note: A corresponding DB driver is required (psycopg2, pymysql, sqlite3). [See list of supported dialects](https://docs.sqlalchemy.org/en/20/dialects/index.html).
