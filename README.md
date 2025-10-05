@@ -90,7 +90,6 @@ response = client.post("/auth/login", json={"username": "test"})
 ```python
 db = SqlClient("postgresql://localhost/testdb")
 users = db.fetch_data("SELECT * FROM users WHERE active = true")
-db.execute_and_commit("UPDATE users SET last_login = NOW() WHERE id = 1")
 ```
 
 ### 📊 GraphQL client — Modern APIs with minimal effort
