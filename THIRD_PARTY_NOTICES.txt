@@ -1,0 +1,40 @@
+This project is licensed under the MIT License.
+See the LICENSE file for details.
+
+It also makes use of the following third-party components:
+
+- httpx (BSD-3-Clause License)
+  https://github.com/encode/httpx
+  See licenses/httpx.LICENSE
+
+- jinja2 (BSD-3-Clause License)
+  https://github.com/pallets/jinja
+  See licenses/jinja2.LICENSE
+
+- jsonschema (MIT License)
+  https://github.com/python-jsonschema/jsonschema
+  See licenses/jsonschema.LICENSE
+
+- pytest (MIT License)
+  https://github.com/pytest-dev/pytest
+  See licenses/pytest.LICENSE
+
+- python-dotenv (BSD-3-Clause License)
+  https://github.com/theskumar/python-dotenv
+  See licenses/python_dotenv.LICENSE
+
+- redis-py (MIT License)
+  https://github.com/redis/redis-py
+  See licenses/redis-py.LICENSE
+
+- SQLAlchemy (MIT License)
+  https://github.com/sqlalchemy/sqlalchemy
+  See licenses/sqlalchemy.LICENSE
+
+- Playwright for Python (Apache License 2.0)
+  https://github.com/microsoft/playwright-python
+  See licenses/playwright-python.LICENSE
+
+- pytest-playwright (Apache License 2.0)
+  https://github.com/microsoft/playwright-pytest
+  See licenses/pytest-playwright.LICENSE
