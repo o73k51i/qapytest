@@ -23,6 +23,7 @@ class BaseHttpClient(Client):
         sensitive_text_patterns: list[str] | None = None,
         mask_sensitive_data: bool = True,
         name_logger: str = "HttpClient",
+        enable_log: bool = True,
         **kwargs,
     ) -> None:
         """Constructor for BaseHttpClient."""
@@ -31,6 +32,7 @@ class BaseHttpClient(Client):
             logging.getLogger(name).setLevel(logging.WARNING)
         self._logger = logging.getLogger(name_logger)
         self._mask_sensitive_data = mask_sensitive_data
+        self.enable_log = enable_log
 
         # Default sensitive headers
         default_sensitive_headers = {
@@ -247,6 +249,7 @@ class BaseHttpClient(Client):
     def request(self, *args, **kwargs) -> Response:
         """Root method to perform HTTP requests with logging."""
         response = super().request(*args, **kwargs)
-        self._log_request(response)
-        self._log_response(response)
+        if self.enable_log:
+            self._log_request(response)
+            self._log_response(response)
         return response
