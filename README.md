@@ -1,6 +1,7 @@
 # QaPyTest
 
 [![PyPI version](https://img.shields.io/pypi/v/qapytest.svg)](https://pypi.org/project/qapytest/)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/qapytest?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLUE&right_color=YELLOW&left_text=downloads)](https://pepy.tech/projects/qapytest)
 [![Python versions](https://img.shields.io/pypi/pyversions/qapytest.svg)](https://pypi.org/project/qapytest/)
 [![License](https://img.shields.io/github/license/o73k51i/qapytest.svg)](https://github.com/o73k51i/qapytest/blob/main/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/o73k51i/qapytest.svg?style=social)](https://github.com/o73k51i/qapytest)
