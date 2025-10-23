@@ -17,11 +17,11 @@ This document describes the public APIs exported by the `QaPyTest` package inten
 ### Integration clients
 
 #### `HttpClient`
-- Signature: `HttpClient(base_url: str = "", headers: dict[str, str] | None = None, verify: bool = True, timeout: float = 10.0, sensitive_headers: set[str] | None = None, sensitive_json_fields: set[str] | None = None, sensitive_text_patterns: list[str] | None = None, mask_sensitive_data: bool = True, **kwargs)` — subclass of `httpx.Client`
+- Signature: `HttpClient(base_url: str = "", headers: dict[str, str] | None = None, verify: bool = True, timeout: float = 10.0, sensitive_headers: set[str] | None = None, sensitive_json_fields: set[str] | None = None, sensitive_text_patterns: list[str] | None = None, mask_sensitive_data: bool = True, name_logger: str = "HttpClient", enable_log: bool = True, **kwargs)` — subclass of `httpx.Client`
 - Description: full-featured HTTP client with automatic request/response logging and sensitive data masking
-- Logging: automatically logs requests, responses, durations and status codes via the `HttpClient` logger
+- Logging: automatically logs requests, responses, durations and status codes via the logger specified by `name_logger` parameter (default: `HttpClient`) when `enable_log=True`
 - Methods: all `httpx.Client` methods (`get`, `post`, `put`, `delete`, `patch`, `request`)
-- Features: context manager support, automatic suppression of internal httpx/httpcore loggers, sensitive data masking
+- Features: context manager support, automatic suppression of internal httpx/httpcore loggers, sensitive data masking, optional request/response logging
 - Example:
 
 ```python
@@ -32,10 +32,19 @@ client = HttpClient(
     base_url="https://jsonplaceholder.typicode.com", 
     timeout=30,
     headers={"Authorization": "Bearer token"},
-    mask_sensitive_data=True
+    mask_sensitive_data=True,
+    name_logger="HttpClient",  # Custom logger name (default: "HttpClient")
+    enable_log=True  # Enable automatic request/response logging (default)
 )
 response = client.get("/posts/1")
 assert response.status_code == 200
+
+# Disable logging for high-volume requests
+silent_client = HttpClient(
+    base_url="https://api.example.com",
+    enable_log=False  # Disable automatic logging
+)
+response = silent_client.get("/data")
 
 # Context manager support
 with HttpClient(base_url="https://api.example.com") as client:
@@ -43,23 +52,26 @@ with HttpClient(base_url="https://api.example.com") as client:
 ```
 
 #### `GraphQLClient`
-- Signature: `GraphQLClient(endpoint_url: str, headers: dict[str, str] | None = None, verify: bool = True, timeout: float = 10.0, sensitive_headers: set[str] | None = None, sensitive_json_fields: set[str] | None = None, sensitive_text_patterns: list[str] | None = None, mask_sensitive_data: bool = True, **kwargs)`
+- Signature: `GraphQLClient(endpoint_url: str, headers: dict[str, str] | None = None, verify: bool = True, timeout: float = 10.0, sensitive_headers: set[str] | None = None, sensitive_json_fields: set[str] | None = None, sensitive_text_patterns: list[str] | None = None, mask_sensitive_data: bool = True, name_logger: str = "GraphQLClient", enable_log: bool = True, **kwargs)`
 - Description: specialized client for GraphQL APIs with automatic logging of requests and responses and sensitive data masking
-- Logging: records GraphQL queries, variables, response time and status via the `GraphQLClient` logger
+- Logging: records GraphQL queries, variables, response time and status via the logger specified by `name_logger` parameter (default: `GraphQLClient`) when `enable_log=True`
 - Methods:
   - `execute(query: str, variables: dict | None = None) -> httpx.Response`
-- Features: automatic POST request formation, variable logging, headers support, sensitive data masking
+- Features: automatic POST request formation, variable logging, headers support, sensitive data masking, optional request/response logging
 - Example:
 
 ```python
 from qapytest import GraphQLClient
 
+# Client with automatic logging enabled
 client = GraphQLClient(
   endpoint_url="https://spacex-production.up.railway.app/",
   headers={"Authorization": "Bearer token"},
   verify=True,
   timeout=15.0,
-  mask_sensitive_data=True
+  mask_sensitive_data=True,
+  name_logger="GraphQLClient",  # Custom logger name (default: "GraphQLClient")
+  enable_log=True  # Enable automatic request/response logging (default)
 )
 
 query = """
@@ -73,12 +85,18 @@ query GetLaunches($limit: Int) {
 response = client.execute(query, variables={"limit": 3})
 assert response.status_code == 200
 data = response.json()
+
+# Client without logging for high-frequency queries
+silent_client = GraphQLClient(
+  endpoint_url="https://api.example.com/graphql",
+  enable_log=False  # Disable automatic logging
+)
 ```
 
 #### `SqlClient`
-- Constructor: `SqlClient(connection_string: str, mask_sensitive_data: bool = True, sensitive_data: set[str] | None = None, **kwargs)` — creates a SQLAlchemy engine with logging and sensitive data masking
+- Constructor: `SqlClient(connection_string: str, name_logger: str = "SqlClient", mask_sensitive_data: bool = True, sensitive_data: set[str] | None = None, **kwargs)` — creates a SQLAlchemy engine with logging and sensitive data masking
 - Description: client for executing raw SQL queries with automatic transaction management and comprehensive logging
-- Logging: logs all SQL queries, parameters, results and errors via the `SqlClient` logger with automatic sensitive data masking
+- Logging: logs all SQL queries, parameters, results and errors via the logger specified by `name_logger` parameter (default: `SqlClient`) with automatic sensitive data masking
 - Methods:
   - `fetch_data(query: str, params: dict | None = None) -> list[dict]` — SELECT queries, returns list of dicts
   - `execute_query(query: str, params: list[dict[str, Any]] | dict[str, Any] | None = None, return_inserted_ids: bool = False) -> dict[str, Any]` — INSERT/UPDATE/DELETE with auto-commit, returns execution stats
@@ -93,6 +111,7 @@ from qapytest import SqlClient
 # Connect to the database with sensitive data masking
 db = SqlClient(
   "postgresql://user:pass@localhost:5432/testdb",
+  name_logger="SqlClient",  # Custom logger name (default: "SqlClient")
   mask_sensitive_data=True,
   sensitive_data={"api_key", "auth_token"}
 )
@@ -142,9 +161,9 @@ with SqlClient("sqlite:///:memory:") as db:
 Note: A corresponding DB driver is required (psycopg2, pymysql, sqlite3). [See list of supported dialects](https://docs.sqlalchemy.org/en/20/dialects/index.html).
 
 #### `RedisClient`
-- Constructor: `RedisClient(host: str, port: int = 6379, **kwargs)` — extends `redis.Redis` with enhanced logging
+- Constructor: `RedisClient(host: str, port: int = 6379, name_logger: str = "RedisClient", **kwargs)` — extends `redis.Redis` with enhanced logging
 - Description: Redis client wrapper that adds comprehensive logging for all Redis commands. Inherits all functionality from the standard `redis-py` library.
-- Logging: logs all Redis commands at INFO level and results at DEBUG level via the `RedisClient` logger
+- Logging: logs all Redis commands at INFO level and results at DEBUG level via the logger specified by `name_logger` parameter (default: `RedisClient`)
 - Methods: all standard `redis.Redis` methods (`set`, `get`, `delete`, `exists`, `lpush`, `rpop`, `sadd`, `sismember`, `hset`, `hget`, etc.)
 - Features: command execution logging, result logging, error logging, automatic suppression of internal redis loggers
 - Example:
@@ -154,7 +173,7 @@ from qapytest import RedisClient
 import json
 
 # Connect to Redis with enhanced logging
-redis_client = RedisClient(host="localhost", port=6379, db=0)
+redis_client = RedisClient(host="localhost", port=6379, db=0, name_logger="RedisClient")
 
 # Use all standard Redis methods with automatic logging
 redis_client.set("user:123:status", "active", ex=3600)  # TTL 1 hour
