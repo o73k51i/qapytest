@@ -64,20 +64,28 @@ class RedisClient(redis.Redis):
     redis_client.sadd('users:active', 'user1', 'user2', 'user3')
     is_member = redis_client.sismember('users:active', 'user1')
     print(f"User1 is active: {is_member}")  # >>> User1 is active: True
+
+    # 9. Using context manager for automatic connection cleanup
+    with RedisClient(host='localhost', port=6379) as client:
+        client.set('session:token', 'abc123', ex=300)
+        token = client.get('session:token')
+        print(f"Session token: {token}")
+    # Connection is automatically closed after the 'with' block
     ```
     """
 
-    def __init__(self, host: str, port: int = 6379, **kwargs) -> None:
+    def __init__(self, host: str, port: int = 6379, name_logger: str = "RedisClient", **kwargs) -> None:
         """Constructor for RedisClient.
 
         Args:
             host: Redis server address.
             port: Redis server port. Default is 6379.
+            name_logger: Name of the logger to use for logging Redis commands.
             **kwargs: Other keyword arguments passed directly to the
                       `redis.Redis` constructor (e.g., `password`, `ssl`).
         """
         super().__init__(host=host, port=port, **kwargs)
-        self._logger = logging.getLogger("RedisClient")
+        self._logger = logging.getLogger(name_logger)
         for name in ("redis", "redis.connection", "redis.client"):
             logging.getLogger(name).setLevel(logging.WARNING)
 
@@ -110,3 +118,33 @@ class RedisClient(redis.Redis):
         except Exception as e:
             self._logger.error(f"Command '{command}' failed: {e}")
             raise
+
+    def close(self) -> None:
+        """Closes the Redis connection and releases resources.
+
+        Call this method when you're done working with Redis to free resources
+        such as TCP connections and memory used by the connection pool.
+        """
+        try:
+            self.connection_pool.disconnect()
+        except Exception as e:
+            self._logger.error(f"Error while closing Redis connection: {e}")
+            raise
+
+    def __enter__(self) -> "RedisClient":
+        """Context manager entry.
+
+        Returns:
+            The RedisClient instance itself.
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:  # noqa: ANN001
+        """Context manager exit - closes connection.
+
+        Args:
+            exc_type: Exception type if an exception was raised.
+            exc_val: Exception value if an exception was raised.
+            exc_tb: Exception traceback if an exception was raised.
+        """
+        self.close()
