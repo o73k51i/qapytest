@@ -31,6 +31,10 @@ It also makes use of the following third-party components:
   https://github.com/sqlalchemy/sqlalchemy
   See licenses/sqlalchemy.LICENSE
 
+- Faker (MIT License)
+  https://github.com/joke2k/faker
+  See licenses/faker.LICENSE
+
 - Playwright for Python (Apache License 2.0)
   https://github.com/microsoft/playwright-python
   See licenses/playwright-python.LICENSE
