@@ -12,7 +12,7 @@ class HttpClient(BaseHttpClient):
     This class inherits all the functionality of the standard `httpx.Client`,
     adding automatic and structured logging for each request and response.
     It also suppresses the default logs from the `httpx` and `httpcore` libraries,
-    leaving only clean output from its own logger "HttpClient".
+    leaving only clean output from its own logger (configurable via `name_logger`).
 
     This is a tool for API testing.
 
@@ -28,6 +28,8 @@ class HttpClient(BaseHttpClient):
         sensitive_json_fields: Set of JSON field names to mask in logs.
                                If None, uses default sensitive fields.
         mask_sensitive_data: Whether to mask sensitive data in logs. Default is True.
+        name_logger: Name of the logger to use for logging HTTP requests.
+                     Default is "HttpClient".
         **kwargs: Additional arguments passed directly to the constructor of the base
                  `httpx.Client` class (e.g., `headers`, `cookies`, `proxies`).
 
@@ -65,6 +67,7 @@ class HttpClient(BaseHttpClient):
         sensitive_json_fields: set[str] | None = None,
         sensitive_text_patterns: list[str] | None = None,
         mask_sensitive_data: bool = True,
+        name_logger: str = "HttpClient",
         **kwargs,
     ) -> None:
         """Constructor for HttpClient.
@@ -83,6 +86,8 @@ class HttpClient(BaseHttpClient):
                                      If None, uses default patterns.
             mask_sensitive_data: Whether to mask sensitive data in logs.
                                  Default is True.
+            name_logger: Name of the logger to use for logging HTTP requests.
+                         Default is "HttpClient".
             **kwargs: Standard arguments for the `httpx.Client` constructor.
         """
         super().__init__(
@@ -94,7 +99,7 @@ class HttpClient(BaseHttpClient):
             sensitive_json_fields=sensitive_json_fields,
             sensitive_text_patterns=sensitive_text_patterns,
             mask_sensitive_data=mask_sensitive_data,
-            name_logger="HttpClient",
+            name_logger=name_logger,
             **kwargs,
         )
 
@@ -104,7 +109,7 @@ class GraphQLClient:
 
     It adds automatic and structured logging for each request and response.
     It also mutes the standard logs from the `httpx` and `httpcore` libraries,
-    leaving only the output from its own logger "GraphQLClient".
+    leaving only the output from its own logger (configurable via `name_logger`).
 
     This is a tool for testing GraphQL APIs.
 
@@ -120,6 +125,8 @@ class GraphQLClient:
                                If None, uses default sensitive fields.
         mask_sensitive_data: Whether to mask sensitive data in logs.
                              Default is True.
+        name_logger: Name of the logger to use for logging GraphQL requests.
+                     Default is "GraphQLClient".
         **kwargs: Other arguments passed directly to the `httpx.Client` constructor.
 
     ---
@@ -172,6 +179,7 @@ class GraphQLClient:
         sensitive_json_fields: set[str] | None = None,
         sensitive_text_patterns: list[str] | None = None,
         mask_sensitive_data: bool = True,
+        name_logger: str = "GraphQLClient",
         **kwargs,
     ) -> None:
         """Constructor for GraphQLClient.
@@ -190,6 +198,8 @@ class GraphQLClient:
                                      If None, uses default patterns.
             mask_sensitive_data: Whether to mask sensitive data in logs.
                                  Default is True.
+            name_logger: Name of the logger to use for logging GraphQL requests.
+                         Default is "GraphQLClient".
             **kwargs: Standard arguments for the `httpx.Client` constructor.
         """
         self._endpoint_url = endpoint_url
@@ -201,7 +211,7 @@ class GraphQLClient:
             sensitive_json_fields=sensitive_json_fields,
             sensitive_text_patterns=sensitive_text_patterns,
             mask_sensitive_data=mask_sensitive_data,
-            name_logger="GraphQLClient",
+            name_logger=name_logger,
             **kwargs,
         )
 
