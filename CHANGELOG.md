@@ -8,23 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - 2025-10-24
 
 ### Added
+
 - 🎭 **Playwright integration** - pytest-playwright support with cross-browser testing (Chromium, Firefox, WebKit)
 - 🌐 **Browser automation** - video recording, screenshots, traces, and mobile device emulation
 - 🎲 **Faker integration** - built-in test data generation
 - 🏷️ **Logger naming** - added ability to provide custom names for client loggers
 
 ### Changed
+
 - 📚 **Documentation updates** - CLI and API docs
 - 📚 **Third-party notices** - added Playwright and Faker licenses
 - 🔧 **Project structure** - enhanced with browser testing capabilities
 - 🧪 **Demo examples** - enhanced demo.py with comprehensive test scenarios
 
 ### Fixed
+
 - 🔧 **Internal fixes** - resolved internal bugs and improved stability
 
 ## [0.2.0] - 2025-10-06
 
 ### 🔧 Refactoring
+
 - **Refactored public methods** - updated SqlClient API structure
 - **Updated documentation** - aligned with current SqlClient implementation
 - **Fixed tests** - updated test cases to match current SqlClient implementation
@@ -32,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.6] - 2025-09-30
 
 ### Fixed
+
 - 🔴 **RedisClient** - improved connection handling and management
 - 🔧 **Configuration** - fixed Redis client configuration and connection parameters
 - 🔇 **HTTP library logging** - suppressed verbose logging from httpx, httpcore, and urllib3 to WARNING level to reduce noise in test output
@@ -39,18 +44,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.5] - 2025-09-25
 
 ### Fixed
+
 - 🔒 **HTTP request logging** - fixed data masking in HTTP request/response logging to properly sanitize sensitive information
 - 🌐 **Response headers logging** - improved logging of response headers with enhanced data sanitization
 
 ## [0.1.4] - 2025-09-25
 
 ### Enhanced
+
 - 🔒 **Sensitive data masking** - comprehensive masking for headers, JSON fields, and text patterns in HTTP/GraphQL clients
 - 🌐 **HttpClient & GraphQLClient** - unified BaseHttpClient architecture with enhanced logging and data sanitization
 - 📝 **Documentation** - updated API documentation with complete parameter descriptions and sensitive data masking features
 - 🔗 **README links** - fixed GitHub documentation links to use absolute URLs
 
 ### Added
+
 - 🛡️ **New configuration options** for HttpClient and GraphQLClient:
   - `sensitive_headers` - set of header names to mask in logs
   - `sensitive_json_fields` - set of JSON field names to mask
@@ -58,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `mask_sensitive_data` - toggle for sensitive data masking
 
 ### Fixed
+
 - 🧪 **Test improvements** - enhanced test coverage for logging assertions and header sanitization
 - 📊 **GraphQL client** - removed unnecessary mocks and improved test assertions
 - 🔧 **Import organization** - refactored client imports for better maintainability
@@ -65,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.3] - 2025-09-24
 
 ### Fixed
+
 - 🌐 **HTTP request logging** - improved logging format and sensitive data sanitization in HTTP requests/responses
 - 📊 **GraphQL client** - enhanced logging and data masking capabilities for GraphQL operations
 - 🧪 **Internal testing improvements** - updated test suite to align with current HttpClient and GraphQLClient implementations
@@ -72,11 +82,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.2] - 2025-09-22
 
 ### Fixed
+
 - 🌐 **Unicode support in HTML reports** - fixed display of Cyrillic and other non-ASCII characters in parametrized test names
 - 📊 **Parameter display** - test parameters with Unicode characters now show properly instead of escape sequences
 - 🔧 **NodeID formatting** - improved Unicode handling in test identification strings
 
 ### Added
+
 - ✅ **Unicode decoding functions** - added `decode_unicode_escapes()` utility for proper character rendering
 - 📝 **Enhanced parameter parsing** - improved `parse_params_from_nodeid()` with Unicode escape sequence support
 - 🧪 **Comprehensive tests** - added test coverage for Unicode handling functions
@@ -84,6 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.1] - 2025-09-19
 
 ### Changed
+
 - 🔧 **Internal improvements** - enhanced project structure and configuration
 - 📝 **Documentation updates** - improved README with badges and better formatting
 - ⚙️ **Build configuration** - optimized pyproject.toml for PyPI publishing
@@ -93,6 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2025-09-19
 
 ### Added
+
 - 🚀 **Initial release** of QaPyTest - powerful testing framework for QA engineers
 - 📊 **HTML report generation** with customizable themes (light/dark/auto)
 - 🎯 **Soft assertions** - collect multiple failures in single test run
@@ -109,6 +123,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 📚 **Comprehensive documentation** - API reference and CLI guide
 
 ### Features
+
 - Python 3.10+ support
 - Pytest plugin architecture
 - Self-contained HTML reports

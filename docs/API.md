@@ -1,39 +1,31 @@
 # API documentation `QaPyTest`
 
-This document describes the public APIs exported by the `QaPyTest` package intended for use in tests. All examples are short usage snippets.
+This document describes the public APIs exported by the `QaPyTest` package
+intended for use in tests. All examples are short usage snippets.
 
-## [Integration clients](#clients)
+- [Integration clients](#integration-clients)
+  - [HttpClient](#httpclient)
+  - [GraphQLClient](#graphqlclient)
+  - [SqlClient](#sqlclient)
+  - [RedisClient](#redisclient)
+- [Browser automation](#browser-automation)
+  - [playwright integration](#playwright-integration)
+- [Test data generation](#test-data-generation)
+  - [Faker](#faker)
+- [JSONSchema Validation](#json-schema-validation)
+  - [validation_json](#validate_json)
+- [Test organization helpers](#test-organization-helpers)
+  - [step](#step)
+  - [soft_assert](#soft-assertion)
+  - [attach](#attach)
 
-- [`HttpClient`](#httpclient) — HTTP client
-- [`GraphQLClient`](#graphqlclient) — GraphQL client
-- [`SqlClient`](#sqlclient) — SQL client
-- [`RedisClient`](#redisclient) — Redis client
-
-## [Browser automation](#browser-automation)
-
-- [`playwright integration`](#playwright-integration) — Browser automation
-
-## [Data generation](#test-data-generation)
-
-- [`Faker`](#faker) — Test data generation
-
-## [Validation](#json-schema-validation)
-
-- [`validation_json`](#validate_json) - validation JSONSChema
-
-## [Test organization](#test-organization-helpers)
-
-- [`step(message)`](#stepmessage-str) — context manager for structuring tests
-- [`soft_assert(condition, label, details)`](#soft_assertcondition-label-detailsnone) — soft assertion that does not stop the test
-- [`attach(data, label, mime)`](#attachdata-label-mimenone) — add attachments to reports
-- [`validate_json(data, schema, schema_path, message, strict)`](#validate_json) — JSON schema validation with soft-assert support
-
-## Clients
+## Integration clients
 
 ### `HttpClient`
+
 - Signature:
 
-```
+```text
 HttpClient(
   base_url: str = "",
   headers: dict[str, str] | None = None,
@@ -49,10 +41,16 @@ HttpClient(
 ) — subclass of `httpx.Client`
 ```
 
-- Description: full-featured HTTP client with automatic request/response logging and sensitive data masking
-- Logging: automatically logs requests, responses, durations and status codes via the logger specified by `name_logger` parameter (default: `HttpClient`) when `enable_log=True`
-- Methods: all `httpx.Client` methods (`get`, `post`, `put`, `delete`, `patch`, `request`)
-- Features: context manager support, automatic suppression of internal httpx/httpcore loggers, sensitive data masking, optional request/response logging
+- Description: full-featured HTTP client with automatic request/response
+  logging and sensitive data masking
+- Logging: automatically logs requests, responses, durations and status codes
+  via the logger specified by `name_logger` parameter (default: `HttpClient`)
+  when `enable_log=True`
+- Methods: all `httpx.Client` methods (`get`, `post`, `put`, `delete`,
+  `patch`, `request`)
+- Features: context manager support, automatic suppression of internal
+  httpx/httpcore loggers, sensitive data masking, optional request/response
+  logging
 - Example:
 
 ```python
@@ -60,7 +58,7 @@ from qapytest import HttpClient
 
 # Use as a regular httpx.Client with logging and sensitive data masking
 client = HttpClient(
-    base_url="https://jsonplaceholder.typicode.com", 
+    base_url="https://jsonplaceholder.typicode.com",
     timeout=30,
     headers={"Authorization": "Bearer token"},
     mask_sensitive_data=True,
@@ -83,9 +81,10 @@ with HttpClient(base_url="https://api.example.com") as client:
 ```
 
 ### `GraphQLClient`
-- Signature: 
- 
-```
+
+- Signature:
+
+```text
 GraphQLClient(
   endpoint_url: str,
   headers: dict[str, str] | None = None,
@@ -101,11 +100,15 @@ GraphQLClient(
 ) — subclass of httpx.Client
 ```
 
-- Description: specialized client for GraphQL APIs with automatic logging of requests and responses and sensitive data masking
-- Logging: records GraphQL queries, variables, response time and status via the logger specified by `name_logger` parameter (default: `GraphQLClient`) when `enable_log=True`
+- Description: specialized client for GraphQL APIs with automatic logging of
+  requests and responses and sensitive data masking
+- Logging: records GraphQL queries, variables, response time and status via
+  the logger specified by `name_logger` parameter (default: `GraphQLClient`)
+  when `enable_log=True`
 - Methods:
   - `execute(query: str, variables: dict | None = None) -> httpx.Response`
-- Features: automatic POST request formation, variable logging, headers support, sensitive data masking, optional request/response logging
+- Features: automatic POST request formation, variable logging, headers
+  support, sensitive data masking, optional request/response logging
 - Example:
 
 ```python
@@ -143,9 +146,9 @@ silent_client = GraphQLClient(
 
 ### `SqlClient`
 
-- Signature: 
-  
-```
+- Signature:
+
+```text
 SqlClient(
   connection_string: str,
   name_logger: str = "SqlClient",
@@ -155,17 +158,26 @@ SqlClient(
 ) — class with `SQLAlchemy`
 ```
 
-Note: A corresponding DB driver is required (psycopg2, pymysql, sqlite3). [See list of supported dialects](https://docs.sqlalchemy.org/en/20/dialects/index.html).
+Note: A corresponding DB driver is required (psycopg2, pymysql, sqlite3).
+[See list of supported dialects](https://docs.sqlalchemy.org/en/20/dialects/index.html).
 
-
-- Description: client for executing raw SQL queries with automatic transaction management and comprehensive logging
-- Logging: logs all SQL queries, parameters, results and errors via the logger specified by `name_logger` parameter (default: `SqlClient`) with automatic sensitive data masking
+- Description: client for executing raw SQL queries with automatic transaction
+  management and comprehensive logging
+- Logging: logs all SQL queries, parameters, results and errors via the logger
+  specified by `name_logger` parameter (default: `SqlClient`) with automatic
+  sensitive data masking
 - Methods:
-  - `fetch_data(query: str, params: dict | None = None) -> list[dict]` — SELECT queries, returns list of dicts
-  - `execute_query(query: str, params: list[dict[str, Any]] | dict[str, Any] | None = None, return_inserted_ids: bool = False) -> dict[str, Any]` — INSERT/UPDATE/DELETE with auto-commit, returns execution stats
-  - `fetch_single_value(query: str, params: dict | None = None) -> Any` — returns single value from first row (useful for COUNT, MAX, etc.)
+  - `fetch_data(query: str, params: dict | None = None) -> list[dict]` —
+    SELECT queries, returns list of dicts
+  - `execute_query(query: str, params: list[dict[str, Any]] | dict[str, Any]`
+    `| None = None, return_inserted_ids: bool = False) -> dict[str, Any]` —
+    INSERT/UPDATE/DELETE with auto-commit, returns execution stats
+  - `fetch_single_value(query: str, params: dict | None = None) -> Any` —
+    returns single value from first row (useful for COUNT, MAX, etc.)
   - `close()` — close database connection and dispose engine
-- Features: safe parameterization, automatic rollback on errors, query validation, sensitive data masking, context manager support, batch operations support
+- Features: safe parameterization, automatic rollback on errors, query
+  validation, sensitive data masking, context manager support, batch
+  operations support
 - Example:
 
 ```python
@@ -181,7 +193,7 @@ db = SqlClient(
 
 # Safe query execution with parameters
 users = db.fetch_data(
-  "SELECT * FROM users WHERE active = :status AND age > :min_age", 
+  "SELECT * FROM users WHERE active = :status AND age > :min_age",
   params={"status": True, "min_age": 18}
 )
 
@@ -190,7 +202,9 @@ result = db.execute_query(
   "INSERT INTO users (name, email) VALUES (:name, :email)",
   params={"name": "John", "email": "john@example.com"}
 )
-print(f"Inserted {result['rowcount']} rows, last ID: {result['last_inserted_id']}")
+print(
+  f"Inserted {result['rowcount']} rows, last ID: {result['last_inserted_id']}"
+)
 
 # Batch insert with list of dictionaries
 batch_result = db.execute_query(
@@ -203,7 +217,9 @@ batch_result = db.execute_query(
 print(f"Batch inserted {batch_result['rowcount']} rows")
 
 # Get single values efficiently
-user_count = db.fetch_single_value("SELECT COUNT(*) FROM users WHERE active = true")
+user_count = db.fetch_single_value(
+  "SELECT COUNT(*) FROM users WHERE active = true"
+)
 max_age = db.fetch_single_value("SELECT MAX(age) FROM users")
 
 # PostgreSQL with RETURNING clause
@@ -223,9 +239,9 @@ with SqlClient("sqlite:///:memory:") as db:
 
 ### `RedisClient`
 
-- Signature: 
-  
-```
+- Signature:
+
+```text
 RedisClient(
   host: str,
   port: int = 6379,
@@ -234,10 +250,15 @@ RedisClient(
 ) — subclass of `redis.Redis`
 ```
 
-- Description: Redis client wrapper that adds comprehensive logging for all Redis commands. Inherits all functionality from the standard `redis-py` library.
-- Logging: logs all Redis commands at INFO level and results at DEBUG level via the logger specified by `name_logger` parameter (default: `RedisClient`)
-- Methods: all standard `redis.Redis` methods (`set`, `get`, `delete`, `exists`, `lpush`, `rpop`, `sadd`, `sismember`, `hset`, `hget`, etc.)
-- Features: command execution logging, result logging, error logging, automatic suppression of internal redis loggers
+- Description: Redis client wrapper that adds comprehensive logging for all
+  Redis commands. Inherits all functionality from the standard `redis-py`
+  library.
+- Logging: logs all Redis commands at INFO level and results at DEBUG level
+  via the logger specified by `name_logger` parameter (default: `RedisClient`)
+- Methods: all standard `redis.Redis` methods (`set`, `get`, `delete`,
+  `exists`, `lpush`, `rpop`, `sadd`, `sismember`, `hset`, `hget`, etc.)
+- Features: command execution logging, result logging, error logging,
+  automatic suppression of internal redis loggers
 - Example:
 
 ```python
@@ -245,7 +266,9 @@ from qapytest import RedisClient
 import json
 
 # Connect to Redis with enhanced logging
-redis_client = RedisClient(host="localhost", port=6379, db=0, name_logger="RedisClient")
+redis_client = RedisClient(
+  host="localhost", port=6379, db=0, name_logger="RedisClient"
+)
 
 # Use all standard Redis methods with automatic logging
 redis_client.set("user:123:status", "active", ex=3600)  # TTL 1 hour
@@ -264,7 +287,7 @@ if redis_client.exists("user:123:status"):
 redis_client.lpush("tasks", "task1", "task2", "task3")
 task = redis_client.rpop("tasks")  # Returns b"task1"
 
-# Working with sets  
+# Working with sets
 redis_client.sadd("users:active", "user1", "user2", "user3")
 is_member = redis_client.sismember("users:active", "user1")  # Returns True
 
@@ -277,10 +300,14 @@ name = redis_client.hget("user:123:profile", "name")  # Returns b"John"
 
 ### `playwright integration`
 
-- Description: QaPyTest includes seamless integration with pytest-playwright for browser automation testing
-- Features: automatic browser management, page fixtures, screenshot on failure, video recording, trace collection
-- Setup: Install browser binaries with `playwright install` after installing qapytest
-- Test fixtures: all standard pytest-playwright fixtures are available (`page`, `browser`, `context`, etc.)
+- Description: QaPyTest includes seamless integration with pytest-playwright
+  for browser automation testing
+- Features: automatic browser management, page fixtures, screenshot on
+  failure, video recording, trace collection
+- Setup: Install browser binaries with `playwright install` after installing
+  qapytest
+- Test fixtures: all standard pytest-playwright fixtures are available
+  (`page`, `browser`, `context`, etc.)
 - Configuration: supports all pytest-playwright configuration options
 - Example:
 
@@ -307,11 +334,16 @@ def test_browser_with_faker(page) -> None:
 ## Test data generation
 
 ### `Faker`
+
 - Import: `from qapytest import Faker`
-- Description: Python Faker library for generating realistic test data. QaPyTest includes Faker as a built-in dependency
-- Usage: Create a `Faker` instance and use its methods to generate various types of fake data
-- Features: locale support, custom providers, seeded generation for reproducible tests
-- Categories: personal data, addresses, dates, text, numbers, internet data, financial data, and more
+- Description: Python Faker library for generating realistic test data.
+  QaPyTest includes Faker as a built-in dependency
+- Usage: Create a `Faker` instance and use its methods to generate various
+  types of fake data
+- Features: locale support, custom providers, seeded generation for
+  reproducible tests
+- Categories: personal data, addresses, dates, text, numbers, internet data,
+  financial data, and more
 - Example:
 
 ```python
@@ -319,7 +351,7 @@ from qapytest import Faker
 
 def test_user_profile_creation():
     fake = Faker()
-    
+
     with step("Generate user profile data"):
         profile = {
             "first_name": fake.first_name(),
@@ -330,8 +362,11 @@ def test_user_profile_creation():
 ```
 
 Common Faker methods:
-- **Personal**: `name()`, `first_name()`, `last_name()`, `email()`, `phone_number()`
-- **Address**: `address()`, `city()`, `country()`, `postcode()`, `street_address()`
+
+- **Personal**: `name()`, `first_name()`, `last_name()`, `email()`,
+  `phone_number()`
+- **Address**: `address()`, `city()`, `country()`, `postcode()`,
+  `street_address()`
 - **Date/Time**: `date()`, `date_time()`, `date_of_birth()`, `future_date()`
 - **Text**: `text()`, `sentence()`, `paragraph()`, `word()`
 - **Numbers**: `random_int()`, `random_float()`, `pyfloat()`
@@ -345,7 +380,7 @@ Common Faker methods:
 
 - Signature:
 
-```
+```text
 `validate_json(
   data,
   *,
@@ -356,11 +391,16 @@ Common Faker methods:
 ) -> None
 ```
 
-- Description: Validator that checks `data` against a JSON Schema. The result is recorded as a soft assert via `soft_assert` and does not stop the test by default. If `strict=True`, a mismatch calls `pytest.fail()` and the test fails immediately.
+- Description: Validator that checks `data` against a JSON Schema. The result
+  is recorded as a soft assert via `soft_assert` and does not stop the test by
+  default. If `strict=True`, a mismatch calls `pytest.fail()` and the test
+  fails immediately.
 - Parameters:
   - `data` — object to validate (`dict`, `list`, primitives).
-  - `schema` — Schema itself as a `dict` (mutually exclusive with `schema_path`).
-  - `schema_path` — path to a JSON file with the schema (used if `schema` is not provided).
+  - `schema` — Schema itself as a `dict` (mutually exclusive with
+    `schema_path`).
+  - `schema_path` — path to a JSON file with the schema (used if `schema` is
+    not provided).
   - `message` — message for logging/assertion.
   - `strict` — if `True`, calls `pytest.fail()` on error.
 - Returns: `None` — result is recorded in logs/soft-asserts.
@@ -385,7 +425,9 @@ validate_json(data, schema=schema)
 ## Test organization helpers
 
 ### step
-- Purpose: group processing and logging of steps in a test; creates a hierarchical `step` record.
+
+- Purpose: group processing and logging of steps in a test; creates a
+  hierarchical `step` record.
 - Usage:
 
 ```python
@@ -399,12 +441,14 @@ def test_organization():
       ...
 ```
 
-- Notes: After exiting the context, `passed` is automatically set to `False` if any child records contain errors.
+- Notes: After exiting the context, `passed` is automatically set to `False`
+  if any child records contain errors.
 
 ### soft assertion
-- Signature: 
 
-```
+- Signature:
+
+```text
 soft_assert(
   condition: bool,
   label: str,
@@ -412,9 +456,11 @@ soft_assert(
 ) -> bool
 ```
 
-- Purpose: soft assertion function that logs the result but does not stop test execution
+- Purpose: soft assertion function that logs the result but does not stop test
+  execution
 - Parameters:
-  - `condition` — boolean condition to check (`True` = success, `False` = failure)
+  - `condition` — boolean condition to check (`True` = success, `False` =
+    failure)
   - `label` — short description of what is being checked
   - `details` — additional debugging information (string or list of strings)
 - Returns: `bool` — result of the check (`True` on success)
@@ -436,9 +482,10 @@ def test_user_validation():
 ```
 
 ### attach
+
 - Signature:
 
-```
+```text
 attach(
   data,
   label,
@@ -446,8 +493,10 @@ attach(
 ) -> None
 ```
 
-- Purpose: add an attachment to the current log container (text, JSON, image in base64).
-- Supported `data` types: `dict`, `list`, `bytes`, `str` (also `Path`) and others.
+- Purpose: add an attachment to the current log container (text, JSON, image
+  in base64).
+- Supported `data` types: `dict`, `list`, `bytes`, `str` (also `Path`) and
+  others.
 - Parameters:
   - `data` — data to attach;
   - `label` — attachment name shown in the report;
