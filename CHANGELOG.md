@@ -132,6 +132,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Professional report styling with responsive design
 
 [0.3.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.3.0
+[0.3.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.3.0
 [0.2.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.2.0
 [0.1.6]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.6
 [0.1.5]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.5

@@ -3,21 +3,22 @@
 This document describes the public APIs exported by the `QaPyTest` package
 intended for use in tests. All examples are short usage snippets.
 
-- [Integration clients](#integration-clients)
-  - [HttpClient](#httpclient)
-  - [GraphQLClient](#graphqlclient)
-  - [SqlClient](#sqlclient)
-  - [RedisClient](#redisclient)
-- [Browser automation](#browser-automation)
-  - [playwright integration](#playwright-integration)
-- [Test data generation](#test-data-generation)
-  - [Faker](#faker)
-- [JSONSchema Validation](#json-schema-validation)
-  - [validation_json](#validate_json)
-- [Test organization helpers](#test-organization-helpers)
-  - [step](#step)
-  - [soft_assert](#soft-assertion)
-  - [attach](#attach)
+- [API documentation `QaPyTest`](#api-documentation-qapytest)
+  - [Integration clients](#integration-clients)
+    - [`HttpClient`](#httpclient)
+    - [`GraphQLClient`](#graphqlclient)
+    - [`SqlClient`](#sqlclient)
+    - [`RedisClient`](#redisclient)
+  - [Browser automation](#browser-automation)
+    - [`playwright integration`](#playwright-integration)
+  - [Test data generation](#test-data-generation)
+    - [`Faker`](#faker)
+  - [JSON Schema Validation](#json-schema-validation)
+    - [`validate_json`](#validate_json)
+  - [Test organization helpers](#test-organization-helpers)
+    - [step](#step)
+    - [soft assertion](#soft-assertion)
+    - [attach](#attach)
 
 ## Integration clients
 
@@ -64,9 +65,19 @@ client = HttpClient(
     mask_sensitive_data=True,
     name_logger="HttpClient",  # Custom logger name (default: "HttpClient")
     enable_log=True  # Enable automatic request/response logging (default)
+    mask_sensitive_data=True,
+    name_logger="HttpClient",  # Custom logger name (default: "HttpClient")
+    enable_log=True  # Enable automatic request/response logging (default)
 )
 response = client.get("/posts/1")
 assert response.status_code == 200
+
+# Disable logging for high-volume requests
+silent_client = HttpClient(
+    base_url="https://api.example.com",
+    enable_log=False  # Disable automatic logging
+)
+response = silent_client.get("/data")
 
 # Disable logging for high-volume requests
 silent_client = HttpClient(
@@ -115,11 +126,15 @@ GraphQLClient(
 from qapytest import GraphQLClient
 
 # Client with automatic logging enabled
+# Client with automatic logging enabled
 client = GraphQLClient(
   endpoint_url="https://spacex-production.up.railway.app/",
   headers={"Authorization": "Bearer token"},
   verify=True,
   timeout=15.0,
+  mask_sensitive_data=True,
+  name_logger="GraphQLClient",  # Custom logger name (default: "GraphQLClient")
+  enable_log=True  # Enable automatic request/response logging (default)
   mask_sensitive_data=True,
   name_logger="GraphQLClient",  # Custom logger name (default: "GraphQLClient")
   enable_log=True  # Enable automatic request/response logging (default)
@@ -136,6 +151,12 @@ query GetLaunches($limit: Int) {
 response = client.execute(query, variables={"limit": 3})
 assert response.status_code == 200
 data = response.json()
+
+# Client without logging for high-frequency queries
+silent_client = GraphQLClient(
+  endpoint_url="https://api.example.com/graphql",
+  enable_log=False  # Disable automatic logging
+)
 
 # Client without logging for high-frequency queries
 silent_client = GraphQLClient(
@@ -186,6 +207,7 @@ from qapytest import SqlClient
 # Connect to the database with sensitive data masking
 db = SqlClient(
   "postgresql://user:pass@localhost:5432/testdb",
+  name_logger="SqlClient",  # Custom logger name (default: "SqlClient")
   name_logger="SqlClient",  # Custom logger name (default: "SqlClient")
   mask_sensitive_data=True,
   sensitive_data={"api_key", "auth_token"}
@@ -433,6 +455,12 @@ validate_json(data, schema=schema)
 ```python
 from qapytest import step
 
+def test_organization():
+  with step("Login check"):
+    with step("Open page"):
+      ...
+    with step("Enter data"):
+      ...
 def test_organization():
   with step("Login check"):
     with step("Open page"):

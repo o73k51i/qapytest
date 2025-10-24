@@ -25,6 +25,7 @@ Below are the available options, their purpose, and usage examples.
   in the HTML; larger files will be truncated (default is unlimited).
 
 ### Behavior with `.env`
+### Behavior with `.env`
 
 - If the `--env-file` option is not provided, the plugin will try to load
   `.env` in the working directory.
@@ -139,6 +140,23 @@ pytest --env-file=.env.test --env-override \
 # Full run with all features
 pytest --env-file=.env --report-html=report.html \
        --report-title="Test Run $(date)" \
+       --log-level=INFO
+```
+
+### Complete example with all features
+
+```bash
+# Comprehensive test run with browser automation
+pytest --env-file=.env \
+       --browser chromium \
+       --headed \
+       --video retain-on-failure \
+       --screenshot only-on-failure \
+       --tracing retain-on-failure \
+       --output test-results \
+       --report-html=reports/browser-tests.html \
+       --report-title="Browser Automation Tests" \
+       --report-theme=auto \
        --log-level=INFO
 ```
 
