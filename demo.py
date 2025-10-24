@@ -5,7 +5,7 @@ from time import sleep
 
 import pytest
 
-from qapytest import GraphQLClient, HttpClient, SqlClient, attach, soft_assert, step
+from qapytest import Faker, GraphQLClient, HttpClient, SqlClient, attach, soft_assert, step
 
 
 @pytest.mark.component("demo")
@@ -201,3 +201,42 @@ class TestDemoClients:
         with step("Verifying result"):
             attach(result, "Query result")
             soft_assert(result == [{"number": 1}], "Check query result")
+
+
+@pytest.mark.component("faker_demo")
+class TestFakerData:
+    """Demo test cases for Faker data generation."""
+
+    @pytest.mark.title("Faker Data Generation")
+    @pytest.mark.component("faker", "test_data")
+    def test_faker_data_generation(self) -> None:
+        """Test case demonstrating Faker usage for test data generation."""
+        fake = Faker()
+
+        with step("Generate user profile data"):
+            user_profile = {
+                "name": fake.name(),
+                "email": fake.email(),
+                "phone": fake.phone_number(),
+            }
+            attach(user_profile, "Generated user profile")
+
+
+@pytest.mark.component("browser_automation")
+class TestBrowserDemo:
+    """Demo test cases for browser automation scenarios."""
+
+    @pytest.mark.title("Browser Automation")
+    @pytest.mark.component("playwright")
+    def test_browser_with_faker(self, page) -> None:  # noqa: ANN001
+        """Test case demonstrating browser automation."""
+        with step("Open page"):
+            page.goto("http://example.com/")
+        with step("Check element on page"):
+            title = page.get_by_role("heading").text_content()
+            expect_title = "Example Domain"
+            soft_assert(
+                title == expect_title,
+                "Check title",
+                [f"Expected: {expect_title}", f"Actual: {title}"],
+            )
