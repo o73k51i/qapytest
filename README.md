@@ -30,12 +30,14 @@ Turn your ordinary tests into detailed, structured reports with built-in HTTP, S
 - **SQL client:** client for executing raw SQL queries.
 - **Redis client:** client for working with Redis.
 - **GraphQL client:** client for executing GraphQL requests.
+- **Browser automation:** seamless integration with pytest-playwright for end-to-end web testing.
+- **Test data generation:** built-in Faker support for creating realistic test data.
 - **JSON Schema validation:** function to validate API responses or test artifacts with support for soft-assert and strict mode.
 
 ## 👥 Ideal for
 
-- **QA Engineers** — automate testing of APIs, databases and web services
-- **Test Automation specialists** — get a ready toolkit for comprehensive testing
+- **QA Engineers** — automate testing of APIs, databases, web services and browser interfaces
+- **Test Automation specialists** — get a ready toolkit for comprehensive testing including web automation
 
 ## 🚀 Quick start
 
@@ -48,27 +50,44 @@ pip install qapytest
 ### 2️⃣ Your first powerful test
 
 ```python
-from qapytest import step, attach, soft_assert, HttpClient, SqlClient
+from qapytest import step, attach, soft_assert, HttpClient, SqlClient, Faker
 
 def test_comprehensive_api_validation():
+    fake = Faker()
+    
+    # Generate realistic test data
+    user_data = {
+        "name": fake.name(),
+        "email": fake.email(),
+    }
+    
     # Structured steps for readability
     with step('🌐 Testing API endpoint'):
         client = HttpClient(base_url="https://api.example.com")
-        response = client.get("/users/1")
-        assert response.status_code == 200
+        response = client.post("/users", json=user_data)
+        assert response.status_code == 201
     
     # Add artifacts for debugging
     attach(response.text, 'api_response.json')
     
     # Soft assertions - collect all failures
-    soft_assert(response.json()['id'] == 1, 'User ID check')
-    soft_assert(response.json()['active'], 'User is active')
+    soft_assert(
+        response.json()['id'] > 0,
+        'User ID check'
+    )
+    soft_assert(
+        response.json()['email'] == user_data['email'],
+        'Email matches'
+    )
     
     # Database integration
     with step('🗄️ Validate data in DB'):
-        db = SqlClient("postgresql://user:pass@localhost/db")
-        user_data = db.fetch_data("SELECT * FROM users WHERE id = 1")
-        assert len(user_data) == 1
+        db = SqlClient("sqlite:///:memory:")
+        user_db_data = db.fetch_data(
+            "SELECT * FROM users WHERE email = :email",
+            params={"email": user_data['email']}
+        )
+        assert len(user_db_data) == 1
 ```
 
 ### 3️⃣ Run with beautiful reports
@@ -108,6 +127,20 @@ redis_client.set("session:123", json.dumps({"user_id": 1, "expires": "2024-01-01
 session_data = json.loads(redis_client.get("session:123"))
 ```
 
+### 🎭 Browser automation — powered by Playwright
+```python
+def test_web_app(page):
+    fake = Faker()
+    
+    # Navigate to login page
+    page.goto("https://example.com/login")
+    
+    # Generate and fill test data
+    page.get_by_label("Username").fill(fake.user_name())
+    page.get_by_label("Password").fill(fake.password())
+    page.get_by_role("button", name="Log in").click()
+```
+
 ## 🎛️ Core testing tools
 
 ### 📝 Structured steps
@@ -143,6 +176,15 @@ validate_json(api_response, schema_path="user_schema.json", strict=True)
 validate_json(api_response, schema=user_schema, strict=False)
 ```
 
+### 🎲 Faker — Realistic test data generation
+```python
+fake = Faker()
+
+# Generate test content
+fake.text(max_nb_chars=200)  # Random text
+fake.random_int(min=1, max=100)  # Random numbers
+```
+
 More about the API on the [documentation page](https://github.com/o73k51i/qapytest/blob/main/docs/API.md).
 
 ## Test markers
@@ -171,7 +213,6 @@ def test_user_login():
 - **`--report-html [PATH]`** : create a self-contained HTML report; optionally specify a path (default — `report.html`).
 - **`--report-title NAME`** : set the HTML report title.
 - **`--report-theme {light,dark,auto}`** : choose the report theme: `light`, `dark` or `auto` (default).
-- **`--max-attachment-bytes N`** : maximum size of an attachment (in bytes) that will be inlined in the HTML; larger files will be truncated.
 
 More about CLI options on the [documentation page](https://github.com/o73k51i/qapytest/blob/main/docs/CLI.md).
 
