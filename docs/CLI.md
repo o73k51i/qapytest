@@ -1,11 +1,14 @@
 # Run Parameters
 
 QaPyTest adds a set of useful CLI options to `pytest` for generating an HTML report and controlling
-the behavior of loading environment variables from a `.env` file.
+the behavior of loading environment variables from a `.env` file. When browser automation is used,
+additional Playwright options become available.
 
 Below are the available options, their purpose, and usage examples.
 
 ## CLI options
+
+### QaPyTest Options
 
 - **`--env-file [PATH]`** : path to a `.env` file with environment variables (by default it will try to load `./.env` if it exists).
 - **`--env-override`** : if set, values from `.env` will override existing environment variables.
@@ -14,7 +17,7 @@ Below are the available options, their purpose, and usage examples.
 - **`--report-theme {light,dark,auto}`** : set the report theme: `light`, `dark`, or `auto` (default).
 - **`--max-attachment-bytes N`** : maximum attachment size (in bytes) to embed in the HTML; larger files will be truncated (default is unlimited).
 
-## Behavior with `.env`
+### Behavior with `.env`
 
 - If the `--env-file` option is not provided, the plugin will try to load `.env` in the working directory.
 - If `--env-file=PATH` is specified, the plugin will load variables from that file.
@@ -23,7 +26,7 @@ Below are the available options, their purpose, and usage examples.
 
 The `.env` format is plain: `KEY=VALUE`. Comments and empty lines are ignored.
 
-### Usage examples
+#### Usage examples
 
 ```bash
 pytest --env-file
@@ -31,6 +34,42 @@ pytest --env-file
 pytest --env-file=tests/.env
 # or
 pytest --env-file=.env --env-override
+```
+
+### Playwright Options (when using browser automation)
+
+For browser automation testing, install Playwright browsers:
+
+```bash
+playwright install
+```
+
+This command downloads the browser binaries needed for automated testing.
+
+QaPyTest includes pytest-playwright, which adds these additional CLI options:
+
+- **`--browser {chromium,firefox,webkit}`** : browser to use for tests (default: chromium).
+- **`--headed`** : run tests in headed mode (show browser window).
+- **`--browser-channel CHANNEL`** : browser channel to use (chrome, msedge, etc.).
+- **`--slowmo MILLISECONDS`** : slow down operations by the specified amount of milliseconds.
+- **`--device DEVICE`** : device name to emulate.
+- **`--video {on,off,retain-on-failure}`** : record videos for tests.
+- **`--screenshot {on,off,only-on-failure}`** : capture screenshots.
+- **`--full-page-screenshot`** : capture full page screenshots.
+- **`--tracing {on,off,retain-on-failure}`** : record traces for tests.
+- **`--output DIR`** : directory for test output (videos, screenshots, traces).
+
+#### Browser automation examples
+
+```bash
+# Run browser tests with default browser (chromium)
+pytest --browser chromium --report-html
+
+# Run tests in headed mode for debugging
+pytest --browser firefox --headed --report-html
+
+# Run tests with WebKit (Safari engine)
+pytest --browser webkit --report-html
 ```
 
 ## HTML report generation behavior
@@ -83,5 +122,22 @@ pytest --env-file=.env.test --env-override \
 # Full run with all features
 pytest --env-file=.env --report-html=report.html \
        --report-title="Test Run $(date)" \
+       --log-level=INFO
+```
+
+### Complete example with all features
+
+```bash
+# Comprehensive test run with browser automation
+pytest --env-file=.env \
+       --browser chromium \
+       --headed \
+       --video retain-on-failure \
+       --screenshot only-on-failure \
+       --tracing retain-on-failure \
+       --output test-results \
+       --report-html=reports/browser-tests.html \
+       --report-title="Browser Automation Tests" \
+       --report-theme=auto \
        --log-level=INFO
 ```

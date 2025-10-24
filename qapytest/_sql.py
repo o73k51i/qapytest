@@ -91,6 +91,7 @@ class SqlClient:
     def __init__(
         self,
         connection_string: str,
+        name_logger: str = "SqlClient",
         mask_sensitive_data: bool = True,
         sensitive_data: set[str] | None = None,
         **kwargs,
@@ -99,6 +100,7 @@ class SqlClient:
 
         Args:
             connection_string: Connection string for the database in SQLAlchemy format.
+            name_logger: Name of the logger to use for logging SQL commands.
             mask_sensitive_data: Whether to mask sensitive data in logs. Default is True.
             sensitive_data: Set of keywords to identify sensitive data in parameters for masking.
             **kwargs: Additional arguments passed directly to the `sqlalchemy.create_engine` function.
@@ -107,7 +109,7 @@ class SqlClient:
             Exception: If connection to database fails.
         """
         self._connection_string = connection_string
-        self._logger = logging.getLogger("SqlClient")
+        self._logger = logging.getLogger(name_logger)
         self._hide_sensitive_data = mask_sensitive_data
 
         if kwargs.get("echo"):
