@@ -1,6 +1,7 @@
 This project includes components licensed under the Apache License, Version 2.0.
 
 Specifically:
+
 - Playwright for Python
   Copyright (c) Microsoft Corporation
   Licensed under the Apache License, Version 2.0
