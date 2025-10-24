@@ -79,19 +79,29 @@ class HtmlReportPlugin:
             if utils.is_better_details(record.get("details"), candidate, report):
                 record["details"] = candidate
 
-    def pytest_collectreport(self, report: pytest.TestReport) -> None:
+    def pytest_collectreport(self, report: pytest.CollectReport) -> None:
         if report.failed:
             try:
                 path = str(getattr(report, "fspath", "") or getattr(report, "nodeid", ""))
             except Exception:
                 path = str(getattr(report, "nodeid", ""))
+
+            details = {"headline": "", "longrepr": "", "captured_stdout": "", "captured_logs": ""}
+            try:
+                if hasattr(report, "longrepr") and report.longrepr:
+                    longrepr_text = str(report.longrepr)
+                    details["headline"] = "Collection error"
+                    details["longrepr"] = longrepr_text
+            except Exception:  # noqa: S110
+                pass
+
             self.collection_errors.append(
                 {
                     "nodeid": getattr(report, "nodeid", "<collection>"),
                     "path": path,
                     "outcome": "error",
-                    "duration": report.duration,
-                    "details": {**utils.extract_report_details(report), "_outcome": "error", "_phase": "collect"},
+                    "duration": getattr(report, "duration", 0.0),
+                    "details": {**details, "_outcome": "error", "_phase": "collect"},
                 },
             )
 
