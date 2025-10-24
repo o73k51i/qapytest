@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-10-24
+
+### Added
+- 🎭 **Playwright integration** - pytest-playwright support with cross-browser testing (Chromium, Firefox, WebKit)
+- 🌐 **Browser automation** - video recording, screenshots, traces, and mobile device emulation
+- 🎲 **Faker integration** - built-in test data generation
+- 🏷️ **Logger naming** - added ability to provide custom names for client loggers
+
+### Changed
+- 📚 **Documentation updates** - CLI and API docs
+- 📚 **Third-party notices** - added Playwright and Faker licenses
+- 🔧 **Project structure** - enhanced with browser testing capabilities
+- 🧪 **Demo examples** - enhanced demo.py with comprehensive test scenarios
+
+### Fixed
+- 🔧 **Internal fixes** - resolved internal bugs and improved stability
+
 ## [0.2.0] - 2025-10-06
 
 ### 🔧 Refactoring
@@ -99,6 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable attachment size limits
 - Professional report styling with responsive design
 
+[0.3.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.3.0
 [0.2.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.2.0
 [0.1.6]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.6
 [0.1.5]: https://github.com/o73k51i/qapytest/releases/tag/v0.1.5
