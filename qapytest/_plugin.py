@@ -19,6 +19,56 @@ from qapytest import _internal as utils
 from qapytest import _report as report
 
 
+class UnicodeTerminalPlugin:
+    """Plugin to display Unicode characters properly in terminal output."""
+
+    def __init__(self) -> None:
+        self._original_write = None
+        self._patched = False
+
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_sessionstart(self, session: pytest.Session) -> None:
+        """Patch terminal reporter at session start."""
+        if self._patched:
+            return
+
+        config = session.config
+        terminal_reporter = config.pluginmanager.get_plugin("terminalreporter")
+
+        if terminal_reporter and hasattr(terminal_reporter, "_tw") and hasattr(terminal_reporter._tw, "write"):  # noqa: SLF001
+            try:
+                self._original_write = terminal_reporter._tw.write  # noqa: SLF001
+
+                def unicode_write(s: str, **kwargs: cfg.AnyType) -> None:
+                    """Write method that decodes Unicode escapes."""
+                    if "\\u" in s and ("::" in s or "PASSED" in s or "FAILED" in s):
+                        decoded_s = utils.decode_unicode_escapes(s)
+                        self._original_write(decoded_s, **kwargs)  # type: ignore[misc]
+                    else:
+                        self._original_write(s, **kwargs)  # type: ignore[misc]
+
+                terminal_reporter._tw.write = unicode_write  # noqa: SLF001
+                self._patched = True
+            except Exception:  # noqa: S110
+                pass
+
+    @pytest.hookimpl
+    def pytest_sessionfinish(self, session: pytest.Session, exitstatus: int) -> None:  # noqa: ARG002
+        """Restore original write method at session finish."""
+        if not self._patched:
+            return
+
+        config = session.config
+        terminal_reporter = config.pluginmanager.get_plugin("terminalreporter")
+
+        if terminal_reporter and self._original_write:
+            try:
+                terminal_reporter._tw.write = self._original_write  # noqa: SLF001
+                self._patched = False
+            except Exception:  # noqa: S110
+                pass
+
+
 def pytest_addoption(parser: pytest.Parser) -> None:
     group = parser.getgroup("QAPyTest", "QAPyTest custom options")
     group.addoption(
@@ -67,6 +117,12 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=None,
         help="Max bytes to embed for any single attachment (text or binary). Larger data will be truncated.",
     )
+    group.addoption(
+        "--disable-unicode-terminal",
+        action="store_true",
+        default=False,
+        help="Disable Unicode character display in terminal (for compatibility).",
+    )
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -78,6 +134,10 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "component(*names): Component labels for a test in the HTML report.")
 
     cfg.ATTACH_LIMIT_BYTES = config.getoption("max_attachment_bytes")
+
+    if not config.getoption("disable_unicode_terminal"):
+        unicode_plugin = UnicodeTerminalPlugin()
+        config.pluginmanager.register(unicode_plugin, "unicode_terminal")
 
     report_path = config.getoption("report_html")
     if not report_path:
