@@ -23,8 +23,9 @@ Below are the available options, their purpose, and usage examples.
   `dark`, or `auto` (default).
 - **`--max-attachment-bytes N`** : maximum attachment size (in bytes) to embed
   in the HTML; larger files will be truncated (default is unlimited).
+- **`--disable-unicode-terminal`** : disable Unicode character display in 
+  terminal output for compatibility with older terminals or CI systems.
 
-### Behavior with `.env`
 ### Behavior with `.env`
 
 - If the `--env-file` option is not provided, the plugin will try to load
@@ -45,6 +46,21 @@ pytest --env-file
 pytest --env-file=tests/.env
 # or
 pytest --env-file=.env --env-override
+```
+
+#### Unicode display in terminal
+
+By default, QaPyTest displays Unicode characters (Cyrillic, Arabic, Chinese, etc.) 
+correctly in terminal output for test names with parametrized IDs. If you 
+experience issues with Unicode display in older terminals or CI systems, 
+you can disable this feature:
+
+```bash
+# Disable Unicode character display in terminal
+pytest --disable-unicode-terminal --report-html
+
+# Normal run with Unicode support (default)
+pytest --report-html
 ```
 
 ### Playwright Options (when using browser automation)
