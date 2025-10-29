@@ -27,7 +27,6 @@ Below are the available options, their purpose, and usage examples.
   terminal output for compatibility with older terminals or CI systems.
 
 ### Behavior with `.env`
-### Behavior with `.env`
 
 - If the `--env-file` option is not provided, the plugin will try to load
   `.env` in the working directory.
