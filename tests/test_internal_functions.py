@@ -268,21 +268,22 @@ class TestTextUtilities:
 
     def test_parse_params_from_nodeid_with_unicode_escapes(self):
         """Test parsing parameters with Unicode escape sequences from pytest nodeid."""
-        nodeid_cyrillic = "test_file.py::test_function[\\u041f\\u0435\\u0440\\u0448\\u0438\\u0439]"
+        # Test with already decoded Unicode characters (as they appear in pytest nodeids)
+        nodeid_cyrillic = "test_file.py::test_function[Перший]"
         params = utils.parse_params_from_nodeid(nodeid_cyrillic)
         assert params == "Перший"
 
-        nodeid_multiple = (
-            "test_file.py::test_function[\\u041f\\u0435\\u0440\\"
-            "u0448\\u0438\\u0439-\\u0414\\u0440\\u0443\\u0433\\u0438\\u0439]"
-        )
+        # Test with multiple parameters
+        nodeid_multiple = "test_file.py::test_function[Перший-Другий]"
         params = utils.parse_params_from_nodeid(nodeid_multiple)
         assert params == "Перший-Другий"
 
-        nodeid_mixed = "test_file.py::test_function[test-\\u0422\\u0440\\u0435\\u0442\\u0456\\u0439-param]"
+        # Test with mixed content
+        nodeid_mixed = "test_file.py::test_function[test-Третій-param]"
         params = utils.parse_params_from_nodeid(nodeid_mixed)
         assert params == "test-Третій-param"
 
+        # Test with malformed escape (should return original)
         nodeid_malformed = "test_file.py::test_function[\\u041Z-invalid]"
         params = utils.parse_params_from_nodeid(nodeid_malformed)
         assert params == "\\u041Z-invalid"  # Should return original string on decode error
@@ -323,7 +324,8 @@ class TestTextUtilities:
 
     def test_unicode_functions_integration(self):
         """Test integration of Unicode functions with realistic pytest nodeid examples."""
-        realistic_nodeid = "temp.py::test_parametrized[\\u041f\\u0435\\u0440\\u0448\\u0438\\u0439]"
+        # Test with already decoded Unicode characters
+        realistic_nodeid = "temp.py::test_parametrized[Перший]"
 
         params = utils.parse_params_from_nodeid(realistic_nodeid)
         assert params == "Перший"
@@ -339,10 +341,8 @@ class TestTextUtilities:
         decoded_title = utils.decode_unicode_escapes(title_with_escapes)
         assert decoded_title == "Перевірка відображення параметризації"
 
-        multi_param_nodeid = (
-            "test.py::test_func[\\u041f\\u0435\\u0440\\u0448\\u0438\\u0439-"
-            "\\u0414\\u0440\\u0443\\u0433\\u0438\\u0439-\\u0422\\u0440\\u0435\\u0442\\u0456\\u0439]"
-        )
+        # Test with multiple parameters
+        multi_param_nodeid = "test.py::test_func[Перший-Другий-Третій]"
         multi_params = utils.parse_params_from_nodeid(multi_param_nodeid)
         assert multi_params == "Перший-Другий-Третій"
 
