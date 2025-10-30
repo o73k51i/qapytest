@@ -53,7 +53,7 @@
                     <td class="small">{{ loop.index }}</td>
                     <td>
                         <div class="mono">{{ decode_unicode_escapes(result.title)|e }}</div>
-                        {% if params_str %}<div class="small">Parametrize: {{ params_str|e }}</div>{% endif %}
+                        {% if params_str %}<div class="small">Parametrize: {{ decode_unicode_escapes(params_str)|e }}</div>{% endif %}
                     </td>
                     <td><span class="status {{ result.outcome }}">{{ result.outcome }}</span></td>
                     <td class="small">{{ (result.components or [])|join(', ')|e }}</td>
