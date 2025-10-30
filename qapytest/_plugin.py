@@ -9,7 +9,6 @@ of Pytest.
 
 from __future__ import annotations
 
-import contextlib
 import shutil
 from collections.abc import Generator
 from pathlib import Path
@@ -124,8 +123,16 @@ def pytest_runtest_makereport(item: pytest.Item, call: cfg.AnyType) -> Generator
     outcome = yield
     report: pytest.TestReport = outcome.get_result()  # type: ignore
 
-    if not item.config.getoption("disable_unicode") and hasattr(report, "nodeid") and "\\u" in report.nodeid:
-        report.nodeid = utils.decode_unicode_escapes(report.nodeid)
+    if not item.config.getoption("disable_unicode"):
+        if hasattr(report, "nodeid") and report.nodeid and "\\" in report.nodeid:
+            report.nodeid = utils.decode_unicode_escapes(report.nodeid)
+        if hasattr(report, "location") and getattr(report, "location", None):
+            try:
+                path, lineno, domain = report.location  # type: ignore[misc]
+                if isinstance(domain, str) and "\\" in domain:
+                    report.location = (path, lineno, utils.decode_unicode_escapes(domain))
+            except Exception:  # noqa: S110
+                pass
 
     try:
         if call and getattr(call, "excinfo", None) is not None and call.excinfo.type is not None:
@@ -183,9 +190,14 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
 
 
 def pytest_itemcollected(item: pytest.Item) -> None:
-    if not item.config.getoption("disable_unicode") and "\\" in item.nodeid:
-        with contextlib.suppress(AttributeError):
+    if not item.config.getoption("disable_unicode"):
+        if "\\" in item.nodeid:
             item._nodeid = utils.decode_unicode_escapes(item.nodeid)  # noqa: SLF001
+        try:
+            if isinstance(getattr(item, "name", None), str) and "\\" in item.name:
+                item._name = utils.decode_unicode_escapes(item.name)  # type: ignore # noqa: SLF001
+        except Exception:  # noqa: S110
+            pass
 
 
 def pytest_sessionstart(session):  # noqa: ANN001, ANN202
