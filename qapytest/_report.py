@@ -37,7 +37,7 @@ class HtmlReportPlugin:
             return "", 0, getattr(report, "nodeid", "")
 
     def pytest_runtest_logreport(self, report: pytest.TestReport) -> None:
-        nodeid = report.nodeid
+        nodeid = utils.decode_unicode_escapes(report.nodeid)
         if nodeid not in self.results:
             self.test_order.append(nodeid)
             path, lineno, _ = self._safe_location(report)
@@ -97,7 +97,7 @@ class HtmlReportPlugin:
 
             self.collection_errors.append(
                 {
-                    "nodeid": getattr(report, "nodeid", "<collection>"),
+                    "nodeid": utils.decode_unicode_escapes(getattr(report, "nodeid", "<collection>")),
                     "path": path,
                     "outcome": "error",
                     "duration": getattr(report, "duration", 0.0),

@@ -225,8 +225,8 @@ def test_user_login():
 - **`--report-title NAME`** : set the HTML report title.
 - **`--report-theme {light,dark,auto}`** : choose the report theme: `light`,
   `dark` or `auto` (default).
-- **`--disable-unicode-terminal`** : disable Unicode character display in
-  terminal for compatibility with older systems.
+- **`--disable-unicode`** : disable Unicode character display in 
+  terminal output for compatibility with older terminals or CI systems.
 
 More about CLI options on the [documentation page](https://github.com/o73k51i/qapytest/blob/main/docs/CLI.md).
 

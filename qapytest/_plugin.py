@@ -9,6 +9,7 @@ of Pytest.
 
 from __future__ import annotations
 
+import shutil
 from collections.abc import Generator
 from pathlib import Path
 
@@ -17,56 +18,6 @@ import pytest
 from qapytest import _config as cfg
 from qapytest import _internal as utils
 from qapytest import _report as report
-
-
-class UnicodeTerminalPlugin:
-    """Plugin to display Unicode characters properly in terminal output."""
-
-    def __init__(self) -> None:
-        self._original_write = None
-        self._patched = False
-
-    @pytest.hookimpl(tryfirst=True)
-    def pytest_sessionstart(self, session: pytest.Session) -> None:
-        """Patch terminal reporter at session start."""
-        if self._patched:
-            return
-
-        config = session.config
-        terminal_reporter = config.pluginmanager.get_plugin("terminalreporter")
-
-        if terminal_reporter and hasattr(terminal_reporter, "_tw") and hasattr(terminal_reporter._tw, "write"):  # noqa: SLF001
-            try:
-                self._original_write = terminal_reporter._tw.write  # noqa: SLF001
-
-                def unicode_write(s: str, **kwargs: cfg.AnyType) -> None:
-                    """Write method that decodes Unicode escapes."""
-                    if "\\u" in s and ("::" in s or "PASSED" in s or "FAILED" in s):
-                        decoded_s = utils.decode_unicode_escapes(s)
-                        self._original_write(decoded_s, **kwargs)  # type: ignore[misc]
-                    else:
-                        self._original_write(s, **kwargs)  # type: ignore[misc]
-
-                terminal_reporter._tw.write = unicode_write  # noqa: SLF001
-                self._patched = True
-            except Exception:  # noqa: S110
-                pass
-
-    @pytest.hookimpl
-    def pytest_sessionfinish(self, session: pytest.Session, exitstatus: int) -> None:  # noqa: ARG002
-        """Restore original write method at session finish."""
-        if not self._patched:
-            return
-
-        config = session.config
-        terminal_reporter = config.pluginmanager.get_plugin("terminalreporter")
-
-        if terminal_reporter and self._original_write:
-            try:
-                terminal_reporter._tw.write = self._original_write  # noqa: SLF001
-                self._patched = False
-            except Exception:  # noqa: S110
-                pass
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -118,7 +69,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         help="Max bytes to embed for any single attachment (text or binary). Larger data will be truncated.",
     )
     group.addoption(
-        "--disable-unicode-terminal",
+        "--disable-unicode",
         action="store_true",
         default=False,
         help="Disable Unicode character display in terminal (for compatibility).",
@@ -135,9 +86,36 @@ def pytest_configure(config: pytest.Config) -> None:
 
     cfg.ATTACH_LIMIT_BYTES = config.getoption("max_attachment_bytes")
 
-    if not config.getoption("disable_unicode_terminal"):
-        unicode_plugin = UnicodeTerminalPlugin()
-        config.pluginmanager.register(unicode_plugin, "unicode_terminal")
+    if not config.getoption("--disable-unicode"):
+        for i, arg in enumerate(config.args):
+            if "::" in arg:
+                path_part, test_part = arg.split("::", 1)
+                path = Path(path_part)
+                if not path.is_absolute():
+                    path = Path.cwd() / path
+                abs_path = str(path)
+                try:
+                    encoded_test = test_part.encode("ascii", "backslashreplace").decode("ascii")
+                except Exception:
+                    encoded_test = test_part
+                config.args[i] = abs_path + "::" + encoded_test
+
+        try:
+            import _pytest.main as main
+
+            spec_class = main.Spec  # type: ignore
+            original_matches = spec_class.matches
+
+            def new_matches(self, item):  # noqa: ANN001, ANN202
+                if hasattr(item, "nodeid") and not item.config.getoption("--disable-unicode"):
+                    encoded_item_nodeid = item.nodeid.encode("ascii", "backslashreplace").decode("ascii")
+                    if encoded_item_nodeid == self.nodeid:
+                        return True
+                return original_matches(self, item)
+
+            spec_class.matches = new_matches
+        except Exception:  # noqa: S110
+            pass
 
     report_path = config.getoption("report_html")
     if not report_path:
@@ -172,9 +150,20 @@ def pytest_runtest_teardown(item: pytest.Item, nextitem: pytest.Item | None) -> 
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_makereport(item: pytest.Item, call: cfg.AnyType) -> Generator[cfg.AnyType, None, None]:  # noqa: ARG001
+def pytest_runtest_makereport(item: pytest.Item, call: cfg.AnyType) -> Generator[cfg.AnyType, None, None]:
     outcome = yield
     report: pytest.TestReport = outcome.get_result()  # type: ignore
+
+    if not item.config.getoption("disable_unicode"):
+        if hasattr(report, "nodeid") and report.nodeid and "\\" in report.nodeid:
+            report.nodeid = utils.decode_unicode_escapes(report.nodeid)
+        if hasattr(report, "location") and getattr(report, "location", None):
+            try:
+                path, lineno, domain = report.location  # type: ignore[misc]
+                if isinstance(domain, str) and "\\" in domain:
+                    report.location = (path, lineno, utils.decode_unicode_escapes(domain))
+            except Exception:  # noqa: S110
+                pass
 
     try:
         if call and getattr(call, "excinfo", None) is not None and call.excinfo.type is not None:
@@ -206,6 +195,14 @@ def pytest_runtest_makereport(item: pytest.Item, call: cfg.AnyType) -> Generator
             full_summary = [header, *error_summary_lines]
             report.longrepr = "\n".join(full_summary)
 
+    if (
+        not item.config.getoption("disable_unicode")
+        and hasattr(report, "longrepr")
+        and report.longrepr
+        and "\\u" in str(report.longrepr)
+    ):
+        report.longrepr = utils.decode_unicode_escapes(str(report.longrepr))
+
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:  # noqa: ARG001
     for item in items:
@@ -221,3 +218,48 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
                     components.append(arg)
         if components:
             item.user_properties.append(("components", tuple(components)))
+
+
+def pytest_itemcollected(item: pytest.Item) -> None:
+    if not item.config.getoption("disable_unicode"):
+        if "\\" in item.nodeid:
+            item._nodeid = utils.decode_unicode_escapes(item.nodeid)  # noqa: SLF001
+        try:
+            if isinstance(getattr(item, "name", None), str) and "\\u" in item.name:
+                decoded_name = utils.decode_unicode_escapes(item.name)
+                object.__setattr__(item, "name", decoded_name)
+        except Exception:  # noqa: S110
+            pass
+
+
+def pytest_sessionstart(session):  # noqa: ANN001, ANN202
+    """Patch terminal reporter at session start."""
+    if session.config.getoption("disable_unicode"):
+        return
+
+    try:
+        terminal_reporter = session.config.pluginmanager.get_plugin("terminalreporter")
+        if terminal_reporter and hasattr(terminal_reporter, "_tw"):
+            tw = terminal_reporter._tw  # noqa: SLF001
+            if hasattr(tw, "write"):
+                original_write = tw.write
+
+                def unicode_write(s, **kwargs):  # noqa: ANN001, ANN202
+                    if isinstance(s, str) and "\\" in s:
+                        decoded_s = utils.decode_unicode_escapes(s)
+                        if decoded_s.startswith("_") and decoded_s.endswith("_") and " " in decoded_s:
+                            stripped = decoded_s.strip("_")
+                            if stripped.startswith(" ") and stripped.endswith(" "):
+                                nodeid = stripped.strip()
+                                total_width = shutil.get_terminal_size().columns - 2
+                                nodeid_len = len(nodeid)
+                                if nodeid_len + 4 <= total_width:
+                                    left_underscores = (total_width - nodeid_len - 2) // 2
+                                    right_underscores = total_width - left_underscores - len(nodeid) - 2
+                                    decoded_s = "_" * left_underscores + " " + nodeid + " " + "_" * right_underscores
+                        s = decoded_s
+                    return original_write(s, **kwargs)
+
+                tw.write = unicode_write
+    except Exception:  # noqa: S110
+        pass
