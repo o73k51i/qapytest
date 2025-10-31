@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - 🌍 **Terminal Unicode support** - proper display of Unicode characters (Cyrillic, Arabic, Chinese, etc.) in terminal output for parametrized test names
-- ⚙️ **`--disable-unicode-terminal`** CLI option - compatibility flag for older terminals and CI systems
+- ⚙️ **`--disable-unicode`** CLI option - compatibility flag for older terminals and CI systems
 
 ### Enhanced
 
