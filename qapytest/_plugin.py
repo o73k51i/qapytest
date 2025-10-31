@@ -86,6 +86,37 @@ def pytest_configure(config: pytest.Config) -> None:
 
     cfg.ATTACH_LIMIT_BYTES = config.getoption("max_attachment_bytes")
 
+    if not config.getoption("--disable-unicode"):
+        for i, arg in enumerate(config.args):
+            if "::" in arg:
+                path_part, test_part = arg.split("::", 1)
+                path = Path(path_part)
+                if not path.is_absolute():
+                    path = Path.cwd() / path
+                abs_path = str(path)
+                try:
+                    encoded_test = test_part.encode("ascii", "backslashreplace").decode("ascii")
+                except Exception:
+                    encoded_test = test_part
+                config.args[i] = abs_path + "::" + encoded_test
+
+        try:
+            import _pytest.main as main
+
+            spec_class = main.Spec  # type: ignore
+            original_matches = spec_class.matches
+
+            def new_matches(self, item):  # noqa: ANN001, ANN202
+                if hasattr(item, "nodeid") and not item.config.getoption("--disable-unicode"):
+                    encoded_item_nodeid = item.nodeid.encode("ascii", "backslashreplace").decode("ascii")
+                    if encoded_item_nodeid == self.nodeid:
+                        return True
+                return original_matches(self, item)
+
+            spec_class.matches = new_matches
+        except Exception:  # noqa: S110
+            pass
+
     report_path = config.getoption("report_html")
     if not report_path:
         return
@@ -194,8 +225,9 @@ def pytest_itemcollected(item: pytest.Item) -> None:
         if "\\" in item.nodeid:
             item._nodeid = utils.decode_unicode_escapes(item.nodeid)  # noqa: SLF001
         try:
-            if isinstance(getattr(item, "name", None), str) and "\\" in item.name:
-                item._name = utils.decode_unicode_escapes(item.name)  # type: ignore # noqa: SLF001
+            if isinstance(getattr(item, "name", None), str) and "\\u" in item.name:
+                decoded_name = utils.decode_unicode_escapes(item.name)
+                object.__setattr__(item, "name", decoded_name)
         except Exception:  # noqa: S110
             pass
 
