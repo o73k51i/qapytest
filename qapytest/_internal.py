@@ -296,12 +296,15 @@ def parse_params_from_nodeid(nodeid: str) -> str:
 
 
 def decode_unicode_escapes(text: str) -> str:
-    """Decode Unicode and other escape sequences in text to readable characters."""
+    """Decode Unicode escape sequences in text to readable characters."""
     try:
         if "\\" in text:
             import codecs
 
-            return codecs.decode(text, "unicode_escape")
+            def decode_match(match: re.Match) -> str:
+                return codecs.decode(match.group(0), "unicode_escape")
+
+            return re.sub(r"\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8}", decode_match, text)
         return text
     except Exception:
         return text
