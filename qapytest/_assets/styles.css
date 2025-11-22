@@ -22,7 +22,8 @@
     --row-hover: rgba(0, 0, 0, 0.03);
     --elev-bg: rgba(255, 255, 255, 0.75);
     --elev-border-strong: #c7d0dd;
-    --shadow: rgba(0, 0, 0, 0.08)
+    --shadow: rgba(0, 0, 0, 0.08);
+    --details-label: #007aff;
 }
 
 [data-theme="dark"] {
@@ -49,7 +50,8 @@
     --row-hover: rgba(255, 255, 255, 0.06);
     --elev-bg: rgba(52, 64, 88, 0.62);
     --elev-border-strong: #3b4864;
-    --shadow: rgba(0, 0, 0, 0.35)
+    --shadow: rgba(0, 0, 0, 0.35);
+    --details-label: #93c5fd;
 }
 
 * {
@@ -70,23 +72,26 @@ body {
 
 .header {
     position: relative;
-    padding: 24px 16px;
+    padding: 16px 24px;
     border-bottom: 1px solid var(--border);
     backdrop-filter: var(--glass-blur);
-    background: var(--glass-bg)
+    background: var(--glass-bg);
+    box-shadow: 0 1px 2px var(--shadow);
 }
 
 .container {
-    max-width: 1200px;
-    margin: 0 auto
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 16px;
 }
 
 .title {
-    font-size: 22px;
-    font-weight: 600;
+    font-size: 24px;
+    font-weight: 700;
     margin: 0 auto;
     text-align: center;
-    color: var(--text)
+    color: var(--text);
+    letter-spacing: -0.02em;
 }
 
 .theme-toggle {
@@ -156,9 +161,16 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     background: var(--elev-bg);
     border: 1px solid var(--elev-border-strong);
     border-radius: 16px;
-    padding: 14px;
+    padding: 16px;
     text-align: center;
-    box-shadow: 0 6px 24px var(--shadow)
+    box-shadow: 0 2px 8px var(--shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px var(--shadow);
+    border-color: var(--border);
 }
 
 .card[data-filter] {
@@ -168,18 +180,24 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
 
 .card[data-filter].active {
     outline: 2px solid var(--accent);
-    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15)
+    box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
+    border-color: var(--accent);
 }
 
 .card .label {
-    font-size: 12px;
-    color: var(--muted)
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin-bottom: 4px;
 }
 
 .card .value {
     font-size: 18px;
-    font-weight: 600;
-    margin-top: 4px
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-top: 0;
 }
 
 .card.total .value {
@@ -248,7 +266,7 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
 
 .table-wrap {
     width: 100%;
-    overflow-x: auto;
+    /* overflow-x: auto; Removed to allow sticky headers on desktop */
     -webkit-overflow-scrolling: touch
 }
 
@@ -256,32 +274,48 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    margin: 12px 0;
+    margin: 16px 0;
     background: var(--elev-bg);
     backdrop-filter: var(--glass-blur);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 6px 24px var(--shadow);
-    border: 1px solid var(--elev-border-strong)
+    border-radius: 16px;
+    /* overflow: hidden; Removed to allow sticky headers */
+    box-shadow: 0 4px 24px var(--shadow);
+    border: 1px solid var(--elev-border-strong);
+}
+
+.table th:first-child {
+    border-top-left-radius: 16px;
+}
+
+.table th:last-child {
+    border-top-right-radius: 16px;
 }
 
 .table th,
 .table td {
-    padding: 12px;
+    padding: 16px;
     border-bottom: 1px solid var(--border);
-    vertical-align: top
+    vertical-align: middle;
 }
 
 .table th {
-    background: var(--glass-bg);
+    background: var(--bg);
     text-align: left;
-    font-size: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: var(--muted);
-    white-space: nowrap
+    white-space: nowrap;
+    position: sticky;
+    position: -webkit-sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 1px 0 var(--border);
 }
 
-.table tr:hover {
-    background: var(--row-hover)
+.table tr:hover td {
+    background: var(--row-hover);
 }
 
 .search {
@@ -291,22 +325,34 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
 
 .search input {
     width: 100%;
-    padding: 10px 14px;
+    padding: 12px 16px;
     border-radius: 12px;
     border: 1px solid var(--elev-border-strong);
     background: var(--elev-bg);
     backdrop-filter: var(--glass-blur);
     color: var(--text);
-    box-shadow: 0 2px 10px var(--shadow)
+    font-size: 14px;
+    box-shadow: 0 2px 8px var(--shadow);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.search input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
 }
 
 .status {
-    display: inline-block;
-    padding: 4px 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 12px;
     border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 1;
 }
 
 .status.passed {
@@ -340,7 +386,8 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
 }
 
 .test-row {
-    cursor: pointer
+    cursor: pointer;
+    transition: background-color 0.15s ease;
 }
 
 .details-row td {
@@ -372,7 +419,7 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--muted);
+    color: var(--details-label);
     padding-top: 4px;
 }
 
@@ -744,4 +791,103 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     border-top: 1px solid var(--border);
     padding-top: 4px;
     margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 12px 16px;
+    }
+
+    .title {
+        text-align: left;
+        margin: 0;
+    }
+
+    .theme-toggle {
+        width: 36px;
+        height: 36px;
+        top: 10px;
+        right: 16px;
+    }
+
+    .theme-toggle svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .cards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .card {
+        padding: 12px;
+    }
+
+    .table th,
+    .table td {
+        padding: 12px 8px;
+    }
+
+    .status {
+        padding: 3px 8px;
+    }
+
+    .details {
+        padding: 16px;
+        margin: 8px 0;
+    }
+
+    .details .grid {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .details .k {
+        margin-top: 8px;
+    }
+
+    .details .v {
+        padding-left: 0;
+    }
+
+    .modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .modal-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        position: relative;
+        padding-right: 40px;
+    }
+
+    .modal-close {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        margin: 0;
+    }
+
+    .modal-actions {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .log-filter-menu {
+        right: auto;
+        left: 0;
+    }
+
+    .logs-table .log-level {
+        width: 50px;
+    }
+
+    .logs-table .log-logger {
+        width: 80px;
+    }
 }
