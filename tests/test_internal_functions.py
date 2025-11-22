@@ -322,29 +322,18 @@ class TestTextUtilities:
         decoded = utils.decode_unicode_escapes(no_escapes_text)
         assert decoded == "This text has no unicode escapes"
 
-    def test_unicode_functions_integration(self):
-        """Test integration of Unicode functions with realistic pytest nodeid examples."""
-        # Test with already decoded Unicode characters
-        realistic_nodeid = "temp.py::test_parametrized[Перший]"
+    def test_decode_unicode_escapes_windows_path(self):
+        """Test that Windows paths with backslashes are preserved."""
+        # tests\test_for_test.py -> \t should NOT be converted to tab
+        windows_path = r"tests\test_for_test.py"
+        decoded = utils.decode_unicode_escapes(windows_path)
+        assert decoded == windows_path
+        assert "\t" not in decoded
 
-        params = utils.parse_params_from_nodeid(realistic_nodeid)
-        assert params == "Перший"
-
-        decoded_nodeid = utils.decode_unicode_escapes(realistic_nodeid)
-        assert decoded_nodeid == "temp.py::test_parametrized[Перший]"
-
-        title_with_escapes = (
-            "\\u041f\\u0435\\u0440\\u0435\\u0432\\u0456\\u0440\\u043a\\u0430 "
-            "\\u0432\\u0456\\u0434\\u043e\\u0431\\u0440\\u0430\\u0436\\u0435\\u043d\\u043d\\u044f "
-            "\\u043f\\u0430\\u0440\\u0430\\u043c\\u0435\\u0442\\u0440\\u0438\\u0437\\u0430\\u0446\\u0456\\u0457"
-        )
-        decoded_title = utils.decode_unicode_escapes(title_with_escapes)
-        assert decoded_title == "Перевірка відображення параметризації"
-
-        # Test with multiple parameters
-        multi_param_nodeid = "test.py::test_func[Перший-Другий-Третій]"
-        multi_params = utils.parse_params_from_nodeid(multi_param_nodeid)
-        assert multi_params == "Перший-Другий-Третій"
+        # Path with unicode escape in parameter
+        mixed_path = r"tests\test_for_test.py::test_one[\u043f]"
+        decoded = utils.decode_unicode_escapes(mixed_path)
+        assert decoded == r"tests\test_for_test.py::test_one[п]"
 
 
 class TestReportUtilities:
