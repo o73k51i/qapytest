@@ -869,6 +869,23 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     margin-top: 4px;
 }
 
+.th-sort-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.th-sort-wrapper:hover {
+    color: var(--text);
+}
+
+.sort-icon {
+    font-size: 12px;
+    color: var(--muted);
+}
+
 .th-filter-search,
 .log-filter-search {
     width: 100%;

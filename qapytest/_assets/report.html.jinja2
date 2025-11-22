@@ -51,7 +51,12 @@
                         </div>
                     </div>
                 </th>
-                <th>Duration (s)</th>
+                <th>
+                    <div class="th-sort-wrapper" data-sort="duration">
+                        <span>Duration (s)</span>
+                        <span class="sort-icon">↕</span>
+                    </div>
+                </th>
             </tr>
             </thead>
             <tbody>
@@ -60,7 +65,7 @@
                 {% set test_index = loop.index %}
                 {% set params_str = parse_params_from_nodeid(result.nodeid) %}
                 {% set search_text = [result.nodeid, result.path, result.title, result.components|join(' ')]|join(' ')|e %}
-                <tr class="test-row" data-status="{{ result.outcome }}" data-text="{{ search_text }}" role="button" tabindex="0" aria-expanded="false" aria-controls="{{ details_id }}">
+                <tr class="test-row" data-status="{{ result.outcome }}" data-text="{{ search_text }}" data-duration="{{ result.duration }}" role="button" tabindex="0" aria-expanded="false" aria-controls="{{ details_id }}">
                     <td class="small">{{ loop.index }}</td>
                     <td>
                         <div class="mono">{{ decode_unicode_escapes(result.title)|e }}</div>

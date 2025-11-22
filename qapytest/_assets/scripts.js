@@ -52,6 +52,75 @@
         const componentAllCheckbox = q('.th-filter-menu input[value="all"]');
         const selectedComponents = new Set(['all']);
 
+        const sortHeaders = qa('[data-sort]');
+        let currentSort = { column: null, direction: 'default' };
+        
+        const tbody = q('tbody');
+        const originalRows = [];
+        qa('tbody tr.test-row').forEach(row => {
+            const detailsId = row.getAttribute('aria-controls');
+            const detailsRow = document.getElementById(detailsId);
+            originalRows.push({ row, detailsRow });
+        });
+
+        sortHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const column = header.dataset.sort;
+                let direction = 'desc';
+
+                if (currentSort.column === column) {
+                    if (currentSort.direction === 'default') direction = 'desc';
+                    else if (currentSort.direction === 'desc') direction = 'asc';
+                    else if (currentSort.direction === 'asc') direction = 'default';
+                }
+                
+                currentSort = { column, direction };
+                sortRows(column, direction);
+                updateSortIcons(header, direction);
+            });
+        });
+
+        function sortRows(column, direction) {
+            const tbody = q('tbody');
+            let rowPairs;
+            
+            if (direction === 'default') {
+                rowPairs = originalRows;
+            } else {
+                rowPairs = [...originalRows];
+                rowPairs.sort((a, b) => {
+                    let valA, valB;
+                    
+                    if (column === 'duration') {
+                        valA = parseFloat(a.row.dataset.duration || 0);
+                        valB = parseFloat(b.row.dataset.duration || 0);
+                    }
+                    
+                    if (valA < valB) return direction === 'asc' ? -1 : 1;
+                    if (valA > valB) return direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+
+            rowPairs.forEach(pair => {
+                tbody.appendChild(pair.row);
+                if (pair.detailsRow) tbody.appendChild(pair.detailsRow);
+            });
+        }
+
+        function updateSortIcons(activeHeader, direction) {
+            sortHeaders.forEach(header => {
+                const icon = header.querySelector('.sort-icon');
+                if (header === activeHeader) {
+                    if (direction === 'asc') icon.textContent = '↑';
+                    else if (direction === 'desc') icon.textContent = '↓';
+                    else icon.textContent = '↕';
+                } else {
+                    icon.textContent = '↕';
+                }
+            });
+        }
+
         function toggleRow(tr, multi) {
             const id = tr.getAttribute('aria-controls');
             if (!id) return;
