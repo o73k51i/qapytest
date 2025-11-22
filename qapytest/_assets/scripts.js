@@ -141,7 +141,7 @@
                     try {
                         await navigator.clipboard.writeText(text);
                         const prevHtml = btn.innerHTML;
-                        btn.innerHTML = '<span>✓</span>';
+                        btn.innerHTML = '<span>✓</span> Copy';
                         btn.classList.add('copied');
                         setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = prevHtml; }, 900);
                     } catch (_e) { }
@@ -169,7 +169,14 @@
                         lines.push(logText);
                     }
                 } else {
-                    const valueText = valueElement.textContent.trim();
+                    // Clone the element to manipulate it without affecting the DOM
+                    const clone = valueElement.cloneNode(true);
+                    // Remove details-actions (buttons) from the clone
+                    const actions = clone.querySelector('.details-actions');
+                    if (actions) {
+                        actions.remove();
+                    }
+                    const valueText = clone.textContent.trim();
                     lines.push(`${keyText}: ${valueText}`);
                 }
                 lines.push('');
@@ -295,6 +302,16 @@
         function formatLogsAsTable(codeElement) {
             const logText = codeElement.textContent;
             const lines = logText.split('\n');
+            const modal = codeElement.closest('.modal');
+            
+            const filterWrapper = modal ? modal.querySelector('.log-filter-wrapper') : null;
+            const filterToggle = modal ? modal.querySelector('.log-filter-toggle') : null;
+            const filterMenu = modal ? modal.querySelector('.log-filter-menu') : null;
+            const filterList = modal ? modal.querySelector('.log-filter-list') : null;
+            const allCheckbox = modal ? modal.querySelector('input[value="all"]') : null;
+            const copyBtn = modal ? modal.querySelector('.log-copy-btn') : null;
+            
+            const loggers = new Set();
 
             if (lines.length === 0) return;
 
@@ -315,6 +332,8 @@
 
                 if (logMatch) {
                     const [, level, logger, file, lineNum, message] = logMatch;
+                    loggers.add(logger);
+                    row.dataset.logger = logger;
 
                     let fullMessage = message;
                     let j = i + 1;
@@ -388,6 +407,104 @@
                 table.appendChild(row);
             }
 
+            if (filterList && loggers.size > 0) {
+                filterList.innerHTML = '';
+                const sortedLoggers = Array.from(loggers).sort();
+                
+                sortedLoggers.forEach(logger => {
+                    const label = document.createElement('label');
+                    label.className = 'log-filter-item';
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = logger;
+                    checkbox.checked = true;
+                    
+                    const span = document.createElement('span');
+                    span.textContent = logger;
+                    
+                    label.appendChild(checkbox);
+                    label.appendChild(span);
+                    filterList.appendChild(label);
+                    
+                    checkbox.addEventListener('change', () => {
+                        updateVisibility();
+                        updateAllCheckboxState();
+                    });
+                });
+
+                if (allCheckbox) {
+                    allCheckbox.checked = true;
+                    allCheckbox.addEventListener('change', (e) => {
+                        const checked = e.target.checked;
+                        const checkboxes = filterList.querySelectorAll('input[type="checkbox"]');
+                        checkboxes.forEach(cb => cb.checked = checked);
+                        updateVisibility();
+                    });
+                }
+
+                function updateAllCheckboxState() {
+                    if (!allCheckbox) return;
+                    const checkboxes = Array.from(filterList.querySelectorAll('input[type="checkbox"]'));
+                    const allChecked = checkboxes.every(cb => cb.checked);
+                    const someChecked = checkboxes.some(cb => cb.checked);
+                    allCheckbox.checked = allChecked;
+                    allCheckbox.indeterminate = someChecked && !allChecked;
+                }
+
+                function updateVisibility() {
+                    const checkboxes = Array.from(filterList.querySelectorAll('input[type="checkbox"]'));
+                    const checkedLoggers = new Set(checkboxes.filter(cb => cb.checked).map(cb => cb.value));
+                    
+                    const rows = table.querySelectorAll('tr');
+                    rows.forEach(row => {
+                        const logger = row.dataset.logger;
+                        if (logger) {
+                            row.style.display = checkedLoggers.has(logger) ? '' : 'none';
+                        } else {
+                            row.style.display = ''; 
+                        }
+                    });
+                }
+                
+                if (filterToggle) {
+                    filterToggle.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        filterMenu.hidden = !filterMenu.hidden;
+                    });
+                }
+            } else if (filterWrapper) {
+                // Hide filter if no loggers found
+                filterWrapper.style.display = 'none';
+            }
+
+            if (copyBtn) {
+                copyBtn.addEventListener('click', async () => {
+                    try {
+                        const visibleRows = Array.from(table.querySelectorAll('tr')).filter(row => row.style.display !== 'none');
+                        const textParts = visibleRows.map(row => {
+                            const logger = row.dataset.logger;
+                            const message = row.querySelector('.log-message')?.textContent || '';
+                            
+                            if (logger) {
+                                return `${logger}: ${message}`;
+                            }
+                            return message;
+                        });
+                        
+                        const textToCopy = textParts.join('\n');
+                        
+                        await navigator.clipboard.writeText(textToCopy);
+                        const prevHtml = copyBtn.innerHTML;
+                        copyBtn.innerHTML = '<span>✓</span> Copy';
+                        copyBtn.classList.add('copied');
+                        setTimeout(() => {
+                            copyBtn.classList.remove('copied');
+                            copyBtn.innerHTML = prevHtml;
+                        }, 900);
+                    } catch (_e) { }
+                });
+            }
+
             const preElement = codeElement.parentElement;
             preElement.parentElement.replaceChild(table, preElement);
         }
@@ -423,6 +540,16 @@
                 });
             });
         }
+
+        document.addEventListener('click', (e) => {
+            const menus = qa('.log-filter-menu:not([hidden])');
+            menus.forEach(menu => {
+                const wrapper = menu.closest('.log-filter-wrapper');
+                if (wrapper && !wrapper.contains(e.target)) {
+                    menu.hidden = true;
+                }
+            });
+        });
 
         updateCardStyles();
         bindCopyButtons();

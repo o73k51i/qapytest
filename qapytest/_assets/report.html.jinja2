@@ -110,7 +110,17 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="mono">{{ decode_unicode_escapes(result.title)|e }}</h3>
-                <button class="modal-close" data-modal-close>&times;</button>
+                <div class="modal-actions">
+                    <div class="log-filter-wrapper">
+                        <button class="details-btn log-filter-toggle">Filter Loggers ▾</button>
+                        <div class="log-filter-menu" hidden>
+                            <label class="log-filter-item"><input type="checkbox" value="all" checked> <span>All Loggers</span></label>
+                            <div class="log-filter-list"></div>
+                        </div>
+                    </div>
+                    <button class="details-btn log-copy-btn" title="Copy visible logs"><span>📋</span> Copy</button>
+                    <button class="modal-close" data-modal-close>&times;</button>
+                </div>
             </div>
             <div class="modal-body"><pre><code>{{ result.details.captured_logs|e }}</code></pre></div>
         </div>
