@@ -95,29 +95,53 @@ body {
     right: 16px;
     background: var(--elev-bg);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    width: 38px;
-    height: 38px;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 20px;
     box-shadow: 0 4px 12px var(--shadow);
     backdrop-filter: var(--glass-blur);
-    color: var(--text)
+    color: var(--text);
+    overflow: hidden;
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+    z-index: 10;
 }
 
-.theme-toggle .icon-light {
-    display: none
+.theme-toggle:hover {
+    border-color: var(--accent);
+    background: var(--bg2);
 }
 
-html[data-theme=dark] .theme-toggle .icon-light {
-    display: block
+.theme-toggle svg {
+    width: 20px;
+    height: 20px;
+    position: absolute;
+    transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.5s ease;
 }
 
-html[data-theme=dark] .theme-toggle .icon-dark {
-    display: none
+/* Default (Light Mode): Show Moon */
+.theme-toggle .theme-icon-moon {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+}
+
+.theme-toggle .theme-icon-sun {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.5);
+}
+
+/* Dark Mode: Show Sun */
+html[data-theme="dark"] .theme-toggle .theme-icon-moon {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.5);
+}
+
+html[data-theme="dark"] .theme-toggle .theme-icon-sun {
+    opacity: 1;
+    transform: rotate(0) scale(1);
 }
 
 .cards {
