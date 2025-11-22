@@ -266,7 +266,6 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
 
 .table-wrap {
     width: 100%;
-    /* overflow-x: auto; Removed to allow sticky headers on desktop */
     -webkit-overflow-scrolling: touch
 }
 
@@ -278,7 +277,6 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     background: var(--elev-bg);
     backdrop-filter: var(--glass-blur);
     border-radius: 16px;
-    /* overflow: hidden; Removed to allow sticky headers */
     box-shadow: 0 4px 24px var(--shadow);
     border: 1px solid var(--elev-border-strong);
 }

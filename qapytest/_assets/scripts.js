@@ -45,7 +45,6 @@
         let currentlyOpenId = null;
         
         const componentFilterWrapper = q('.th-filter-wrapper');
-        const componentFilterToggle = q('.th-filter-toggle');
         const componentFilterMenu = q('.th-filter-menu');
         const componentFilterList = q('.th-filter-list');
         const componentFilterSearch = q('.th-filter-search');
