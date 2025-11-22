@@ -802,13 +802,19 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     align-items: center;
     gap: 4px;
     position: relative;
+    cursor: pointer;
+    user-select: none;
+}
+
+.th-filter-wrapper:hover {
+    color: var(--text);
 }
 
 .th-filter-toggle {
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--muted);
+    color: inherit;
     padding: 0 4px;
     font-size: 12px;
 }

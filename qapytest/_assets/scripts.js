@@ -189,8 +189,11 @@
                 });
             }
 
-            if (componentFilterToggle) {
-                componentFilterToggle.addEventListener('click', (e) => {
+            if (componentFilterWrapper) {
+                componentFilterWrapper.addEventListener('click', (e) => {
+                    if (componentFilterMenu && componentFilterMenu.contains(e.target)) {
+                        return;
+                    }
                     e.stopPropagation();
                     componentFilterMenu.hidden = !componentFilterMenu.hidden;
                     if (!componentFilterMenu.hidden && componentFilterSearch) {
