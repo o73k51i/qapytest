@@ -422,11 +422,16 @@ html[data-theme=dark] .theme-toggle .icon-dark {
 }
 
 .details-actions {
-    position: absolute;
-    top: 8px;
-    right: 8px;
     display: flex;
-    gap: 6px
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.node-id-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
 }
 
 .details-btn {
