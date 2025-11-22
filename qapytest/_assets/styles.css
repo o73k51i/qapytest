@@ -591,6 +591,10 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     border: 1px solid var(--elev-border-strong)
 }
 
+.logs-modal-content {
+    height: 85vh;
+}
+
 .modal-header {
     padding: 12px 16px;
     border-bottom: 1px solid var(--border);
@@ -793,6 +797,97 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     margin-top: 4px;
 }
 
+.th-filter-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+}
+
+.th-filter-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    padding: 0 4px;
+    font-size: 12px;
+}
+
+.th-filter-toggle:hover {
+    color: var(--text);
+}
+
+.th-filter-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    background: var(--elev-bg);
+    border: 1px solid var(--elev-border-strong);
+    border-radius: 8px;
+    padding: 8px;
+    min-width: 200px;
+    box-shadow: 0 4px 12px var(--shadow);
+    backdrop-filter: var(--glass-blur);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-weight: normal;
+    text-transform: none;
+}
+
+.th-filter-menu[hidden] {
+    display: none;
+}
+
+.th-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text);
+    border-radius: 4px;
+    user-select: none;
+    white-space: normal;
+}
+
+.th-filter-item:hover {
+    background: var(--row-hover);
+}
+
+.th-filter-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+    border-top: 1px solid var(--border);
+    padding-top: 4px;
+    margin-top: 4px;
+}
+
+.th-filter-search,
+.log-filter-search {
+    width: 100%;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 12px;
+    box-sizing: border-box;
+}
+
+.th-filter-search:focus,
+.log-filter-search:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
 @media (max-width: 768px) {
     .header {
         padding: 12px 16px;
@@ -854,6 +949,10 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     .modal-content {
         width: 95%;
         max-height: 90vh;
+    }
+
+    .logs-modal-content {
+        height: 90vh;
     }
 
     .modal-header {

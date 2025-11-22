@@ -40,7 +40,17 @@
                 <th>#</th>
                 <th>Test</th>
                 <th>Status</th>
-                <th>Component</th>
+                <th>
+                    <div class="th-filter-wrapper">
+                        <span>Component</span>
+                        <button class="th-filter-toggle" title="Filter Components">▾</button>
+                        <div class="th-filter-menu" hidden>
+                            <input type="text" class="th-filter-search" placeholder="Filter..." />
+                            <label class="th-filter-item"><input type="checkbox" value="all" checked> <span>All</span></label>
+                            <div class="th-filter-list"></div>
+                        </div>
+                    </div>
+                </th>
                 <th>Duration (s)</th>
             </tr>
             </thead>
@@ -106,13 +116,14 @@
     {% if result.details.captured_logs and result.details.captured_logs.strip() %}
     <div class="modal" id="logs-modal-{{ details_id }}" hidden>
         <div class="modal-overlay" data-modal-close></div>
-        <div class="modal-content">
+        <div class="modal-content logs-modal-content">
             <div class="modal-header">
                 <h3 class="mono">{{ decode_unicode_escapes(result.title)|e }}</h3>
                 <div class="modal-actions">
                     <div class="log-filter-wrapper">
                         <button class="details-btn log-filter-toggle">Filter Loggers ▾</button>
                         <div class="log-filter-menu" hidden>
+                            <input type="text" class="log-filter-search" placeholder="Filter..." />
                             <label class="log-filter-item"><input type="checkbox" value="all" checked> <span>All Loggers</span></label>
                             <div class="log-filter-list"></div>
                         </div>

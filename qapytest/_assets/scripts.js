@@ -43,6 +43,14 @@
         const qa = (sel, el = document) => Array.from(el.querySelectorAll(sel));
         const filters = new Set();
         let currentlyOpenId = null;
+        
+        const componentFilterWrapper = q('.th-filter-wrapper');
+        const componentFilterToggle = q('.th-filter-toggle');
+        const componentFilterMenu = q('.th-filter-menu');
+        const componentFilterList = q('.th-filter-list');
+        const componentFilterSearch = q('.th-filter-search');
+        const componentAllCheckbox = q('.th-filter-menu input[value="all"]');
+        const selectedComponents = new Set(['all']);
 
         function toggleRow(tr, multi) {
             const id = tr.getAttribute('aria-controls');
@@ -64,7 +72,99 @@
         qa('tbody tr.test-row').forEach(tr => {
             tr.addEventListener('click', (e) => toggleRow(tr, e.altKey === true));
             tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleRow(tr, e.altKey === true); } });
+            
+            const compCell = tr.querySelector('td:nth-child(4)');
+            if (compCell) {
+                const comps = (compCell.textContent || '').split(', ').filter(c => c.trim());
+                tr.dataset.components = JSON.stringify(comps);
+            }
         });
+
+        const allComponents = new Set();
+        qa('tbody tr.test-row').forEach(row => {
+            const comps = JSON.parse(row.dataset.components || '[]');
+            comps.forEach(c => allComponents.add(c));
+        });
+
+        if (componentFilterList && allComponents.size > 0) {
+            const sortedComponents = Array.from(allComponents).sort();
+            
+            sortedComponents.forEach(comp => {
+                const label = document.createElement('label');
+                label.className = 'th-filter-item';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = comp;
+                checkbox.checked = true;
+                
+                const span = document.createElement('span');
+                span.textContent = comp;
+                
+                label.appendChild(checkbox);
+                label.appendChild(span);
+                componentFilterList.appendChild(label);
+                
+                checkbox.addEventListener('change', () => {
+                    updateSelectedComponents();
+                    applyFilters();
+                });
+            });
+
+            if (componentAllCheckbox) {
+                componentAllCheckbox.addEventListener('change', (e) => {
+                    const checked = e.target.checked;
+                    const checkboxes = componentFilterList.querySelectorAll('input[type="checkbox"]');
+                    checkboxes.forEach(cb => cb.checked = checked);
+                    updateSelectedComponents();
+                    applyFilters();
+                });
+            }
+
+            if (componentFilterToggle) {
+                componentFilterToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    componentFilterMenu.hidden = !componentFilterMenu.hidden;
+                    if (!componentFilterMenu.hidden && componentFilterSearch) {
+                        componentFilterSearch.focus();
+                    }
+                });
+            }
+            
+            if (componentFilterSearch) {
+                componentFilterSearch.addEventListener('click', (e) => e.stopPropagation());
+                componentFilterSearch.addEventListener('input', (e) => {
+                    const term = e.target.value.toLowerCase();
+                    const items = qa('.th-filter-item', componentFilterList);
+                    items.forEach(item => {
+                        const text = item.textContent.toLowerCase();
+                        item.style.display = text.includes(term) ? '' : 'none';
+                    });
+                });
+            }
+        } else if (componentFilterWrapper) {
+             componentFilterWrapper.style.display = 'none';
+        }
+
+        function updateSelectedComponents() {
+            selectedComponents.clear();
+            if (componentAllCheckbox && componentAllCheckbox.checked) {
+                selectedComponents.add('all');
+            }
+            
+            const checkboxes = Array.from(componentFilterList.querySelectorAll('input[type="checkbox"]'));
+            checkboxes.forEach(cb => {
+                if (cb.checked) selectedComponents.add(cb.value);
+            });
+
+            if (componentAllCheckbox) {
+                const allChecked = checkboxes.every(cb => cb.checked);
+                const someChecked = checkboxes.some(cb => cb.checked);
+                componentAllCheckbox.checked = allChecked;
+                componentAllCheckbox.indeterminate = someChecked && !allChecked;
+                if (allChecked) selectedComponents.add('all');
+                else selectedComponents.delete('all');
+            }
+        }
 
         const searchInput = q('#search');
         let searchTerm = '';
@@ -97,9 +197,21 @@
             qa('tbody tr.test-row').forEach(row => {
                 const status = row.dataset.status;
                 const text = (row.dataset.text || '').toLowerCase();
+                const rowComponents = JSON.parse(row.dataset.components || '[]');
+
                 const statusMatch = filters.size === 0 || filters.has(status);
                 const searchMatch = !searchTerm || text.includes(searchTerm);
-                const shouldShow = statusMatch && searchMatch;
+                
+                let componentMatch = true;
+                if (!selectedComponents.has('all')) {
+                    if (rowComponents.length === 0) {
+                        componentMatch = false;
+                    } else {
+                        componentMatch = rowComponents.some(c => selectedComponents.has(c));
+                    }
+                }
+
+                const shouldShow = statusMatch && searchMatch && componentMatch;
                 row.style.display = shouldShow ? '' : 'none';
                 const detailsRow = document.getElementById(row.getAttribute('aria-controls'));
                 if (detailsRow) {
@@ -308,6 +420,7 @@
             const filterToggle = modal ? modal.querySelector('.log-filter-toggle') : null;
             const filterMenu = modal ? modal.querySelector('.log-filter-menu') : null;
             const filterList = modal ? modal.querySelector('.log-filter-list') : null;
+            const filterSearch = modal ? modal.querySelector('.log-filter-search') : null;
             const allCheckbox = modal ? modal.querySelector('input[value="all"]') : null;
             const copyBtn = modal ? modal.querySelector('.log-copy-btn') : null;
             
@@ -470,6 +583,21 @@
                     filterToggle.addEventListener('click', (e) => {
                         e.stopPropagation();
                         filterMenu.hidden = !filterMenu.hidden;
+                        if (!filterMenu.hidden && filterSearch) {
+                            filterSearch.focus();
+                        }
+                    });
+                }
+
+                if (filterSearch) {
+                    filterSearch.addEventListener('click', (e) => e.stopPropagation());
+                    filterSearch.addEventListener('input', (e) => {
+                        const term = e.target.value.toLowerCase();
+                        const items = qa('.log-filter-item', filterList);
+                        items.forEach(item => {
+                            const text = item.textContent.toLowerCase();
+                            item.style.display = text.includes(term) ? '' : 'none';
+                        });
                     });
                 }
             } else if (filterWrapper) {
@@ -542,9 +670,9 @@
         }
 
         document.addEventListener('click', (e) => {
-            const menus = qa('.log-filter-menu:not([hidden])');
+            const menus = qa('.log-filter-menu:not([hidden]), .th-filter-menu:not([hidden])');
             menus.forEach(menu => {
-                const wrapper = menu.closest('.log-filter-wrapper');
+                const wrapper = menu.closest('.log-filter-wrapper, .th-filter-wrapper');
                 if (wrapper && !wrapper.contains(e.target)) {
                     menu.hidden = true;
                 }
