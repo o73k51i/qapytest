@@ -425,13 +425,8 @@ html[data-theme=dark] .theme-toggle .icon-dark {
     display: flex;
     gap: 6px;
     flex-shrink: 0;
-}
-
-.node-id-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
+    margin-bottom: 8px;
+    justify-content: flex-end;
 }
 
 .details-btn {

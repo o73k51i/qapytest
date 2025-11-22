@@ -62,17 +62,15 @@
                 <tr class="details-row" id="{{ details_id }}" hidden>
                     <td colspan="5">
                         <div class="details">
+                            <div class="details-actions">
+                                {% if result.details.captured_logs and result.details.captured_logs.strip() %}
+                                <button class="details-btn" type="button" data-modal-target="#logs-modal-{{ details_id }}"><span>📜</span> Logs</button>
+                                {% endif %}
+                                <button class="details-btn copy-btn" type="button" data-copy="#grid-{{ details_id }}" title="Copy details"><span>📋</span> Copy</button>
+                            </div>
                             <div class="grid" id="grid-{{ details_id }}">
                                 <div class="k">NodeID</div>
-                                <div class="v mono node-id-row">
-                                    <span>{{ decode_unicode_escapes(result.nodeid)|e }}</span>
-                                    <div class="details-actions">
-                                        {% if result.details.captured_logs and result.details.captured_logs.strip() %}
-                                        <button class="details-btn" type="button" data-modal-target="#logs-modal-{{ details_id }}"><span>📜</span> Logs</button>
-                                        {% endif %}
-                                        <button class="details-btn copy-btn" type="button" data-copy="#grid-{{ details_id }}" title="Copy details"><span>📋</span> Copy</button>
-                                    </div>
-                                </div>
+                                <div class="v mono">{{ decode_unicode_escapes(result.nodeid)|e }}</div>
                                 <div class="k">File</div><div class="v mono">{{ result.path|e }}</div>
                                 {% if result.details.headline %}
                                 <div class="k">Result</div><div class="v"><span class="status {{ result.outcome }}">{{ result.details.headline|e }}</span></div>
