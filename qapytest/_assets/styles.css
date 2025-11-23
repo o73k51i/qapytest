@@ -264,8 +264,6 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
 
 .table-wrap {
     width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     min-height: 60vh;
 }
 
@@ -1073,6 +1071,36 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
 
 .step-children {
     padding-left: 8px;
+}
+
+.filter-count {
+    background: var(--bg2);
+    color: var(--muted);
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: auto;
+    border: 1px solid var(--border);
+    min-width: 20px;
+    text-align: center;
+}
+
+.th-filter-wrapper.active-filter > span {
+    color: var(--accent);
+}
+
+.th-filter-wrapper.active-filter .th-filter-toggle {
+    color: var(--accent);
+}
+
+.th-filter-wrapper.active-filter::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background-color: var(--accent);
+    border-radius: 50%;
+    margin-left: 2px;
 }
 
 @media (max-width: 768px) {

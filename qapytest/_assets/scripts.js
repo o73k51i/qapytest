@@ -149,9 +149,13 @@
         });
 
         const allComponents = new Set();
+        const componentCounts = {};
         qa('tbody tr.test-row').forEach(row => {
             const comps = JSON.parse(row.dataset.components || '[]');
-            comps.forEach(c => allComponents.add(c));
+            comps.forEach(c => {
+                allComponents.add(c);
+                componentCounts[c] = (componentCounts[c] || 0) + 1;
+            });
         });
 
         if (componentFilterList && allComponents.size > 0) {
@@ -165,11 +169,16 @@
                 checkbox.value = comp;
                 checkbox.checked = true;
                 
-                const span = document.createElement('span');
-                span.textContent = comp;
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = comp;
+                
+                const countSpan = document.createElement('span');
+                countSpan.className = 'filter-count';
+                countSpan.textContent = componentCounts[comp];
                 
                 label.appendChild(checkbox);
-                label.appendChild(span);
+                label.appendChild(nameSpan);
+                label.appendChild(countSpan);
                 componentFilterList.appendChild(label);
                 
                 checkbox.addEventListener('change', () => {
@@ -234,6 +243,14 @@
                 componentAllCheckbox.indeterminate = someChecked && !allChecked;
                 if (allChecked) selectedComponents.add('all');
                 else selectedComponents.delete('all');
+            }
+
+            if (componentFilterWrapper) {
+                if (!selectedComponents.has('all')) {
+                    componentFilterWrapper.classList.add('active-filter');
+                } else {
+                    componentFilterWrapper.classList.remove('active-filter');
+                }
             }
         }
 
@@ -1027,6 +1044,44 @@
             });
         });
 
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                qa('.modal').forEach(modal => {
+                    modal.hidden = true;
+                    document.body.style.overflow = '';
+                });
+
+                qa('.th-filter-menu, .log-filter-menu').forEach(menu => menu.hidden = true);
+
+                qa('tr.test-row[aria-expanded="true"]').forEach(tr => {
+                    tr.setAttribute('aria-expanded', 'false');
+                    const id = tr.getAttribute('aria-controls');
+                    if (id) {
+                        const panel = document.getElementById(id);
+                        if (panel) panel.hidden = true;
+                    }
+                });
+                currentlyOpenId = null;
+
+                if (componentAllCheckbox) {
+                    componentAllCheckbox.checked = true;
+                    const checkboxes = componentFilterList.querySelectorAll('input[type="checkbox"]');
+                    checkboxes.forEach(cb => cb.checked = true);
+                    updateSelectedComponents();
+                }
+
+                filters.clear();
+                updateCardStyles();
+
+                if (searchInput) {
+                    searchInput.value = '';
+                    searchTerm = '';
+                }
+
+                applyFilters();
+            }
+        });
+
         updateCardStyles();
         bindStepToggles();
         bindCopyButtons();
@@ -1104,13 +1159,11 @@
                     const toggles = container.querySelectorAll('.step-toggle');
 
                     if (isExpanded) {
-                        // Collapse all
                         childrenContainers.forEach(el => el.hidden = true);
                         toggles.forEach(el => el.classList.add('collapsed'));
                         btn.textContent = 'Expand All';
                         btn.dataset.expanded = 'false';
                     } else {
-                        // Expand all
                         childrenContainers.forEach(el => el.hidden = false);
                         toggles.forEach(el => el.classList.remove('collapsed'));
                         btn.textContent = 'Collapse All';
