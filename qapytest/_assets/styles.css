@@ -264,8 +264,15 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
 
 .table-wrap {
     width: 100%;
-    -webkit-overflow-scrolling: touch
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    min-height: 60vh;
 }
+
+.table th:nth-child(1) { width: 50px; }
+.table th:nth-child(3) { width: 110px; }
+.table th:nth-child(4) { width: 180px; }
+.table th:nth-child(5) { width: 130px; }
 
 .table {
     width: 100%;
@@ -277,6 +284,7 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     border-radius: 16px;
     box-shadow: 0 4px 24px var(--shadow);
     border: 1px solid var(--elev-border-strong);
+    table-layout: fixed;
 }
 
 .table th:first-child {
@@ -1126,6 +1134,17 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
 
     .logs-table .log-logger {
         width: 80px;
+    }
+
+    .table {
+        table-layout: auto;
+    }
+
+    .table th:nth-child(1),
+    .table th:nth-child(3),
+    .table th:nth-child(4),
+    .table th:nth-child(5) {
+        width: auto;
     }
 }
 
