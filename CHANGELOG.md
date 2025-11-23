@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4] - 2025-11-23
+
+### Enhanced
+
+- 📊 **Interactive HTML Report** - significantly improved report interactivity with new features:
+  - **JSON Viewer** - interactive tree view for JSON attachments with search and expand/collapse capabilities
+  - **Log Filtering** - filter logs by logger name and level, with search functionality
+  - **Component Filtering** - easily filter test results by component
+  - **Step Management** - expand/collapse all steps with a single click
+  - **Navigation** - added "Scroll to top" button for easier navigation in long reports
+- 🛠️ **Soft Assertions** - improved display of soft assertion failures in the report
+
 ## [0.3.3] - 2025-10-31
 
 ### Fixed
@@ -157,6 +169,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable attachment size limits
 - Professional report styling with responsive design
 
+[0.3.4]: https://github.com/o73k51i/qapytest/releases/tag/v0.3.4
 [0.3.3]: https://github.com/o73k51i/qapytest/releases/tag/v0.3.3
 [0.3.2]: https://github.com/o73k51i/qapytest/releases/tag/v0.3.2
 [0.3.1]: https://github.com/o73k51i/qapytest/releases/tag/v0.3.1
