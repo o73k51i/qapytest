@@ -359,7 +359,11 @@
 
                 if (!key || !value) continue;
 
-                const keyText = key.textContent.trim();
+                const keyClone = key.cloneNode(true);
+                const keyButtons = keyClone.querySelectorAll('button, .details-btn, div');
+                keyButtons.forEach(el => el.remove());
+                const keyText = keyClone.textContent.trim();
+                
                 const valueElement = value;
 
                 if (keyText === 'Execution Log') {
@@ -387,13 +391,9 @@
             const lines = [];
 
             function processLogItems(container, indent = '') {
-                const items = qa('li', container);
+                const items = Array.from(container.children).filter(el => el.tagName === 'LI');
+                
                 items.forEach(item => {
-                    const parentUl = item.parentElement;
-                    if (parentUl && parentUl !== container && parentUl.closest('li') && parentUl.closest('li').parentElement === container) {
-                        return;
-                    }
-
                     let text = '';
 
                     if (item.classList.contains('step-passed') || item.classList.contains('step-failed')) {
@@ -404,10 +404,20 @@
                             const stepText = strongElement.nextSibling.textContent?.trim() || '';
                             text = `${stepIcon} ${stepText}`;
                         } else {
-                            const fullText = item.textContent || '';
-                            const cleaned = fullText.replace(/^[✔︎✖︎]\s*Step:\s*/, '').replace(/\s*[✔︎✖︎].*$/, '').trim();
-                            const lines = cleaned.split('\n').filter(line => line.trim());
-                            text = `${stepIcon} ${lines[0] || ''}`;
+                            let directText = '';
+                            item.childNodes.forEach(node => {
+                                if (node.nodeType === Node.TEXT_NODE) {
+                                    directText += node.textContent;
+                                } else if (node.nodeType === Node.ELEMENT_NODE && 
+                                         !node.classList.contains('step-children') && 
+                                         !node.classList.contains('step-toggle') && 
+                                         !node.classList.contains('step-toggle-placeholder')) {
+                                    directText += node.textContent;
+                                }
+                            });
+                            
+                            const cleaned = directText.replace(/^[✔︎✖︎]\s*Step:\s*/, '').replace(/\s*[✔︎✖︎].*$/, '').trim();
+                            text = `${stepIcon} ${cleaned}`;
                         }
                     }
                     else if (item.classList.contains('assert-passed') || item.classList.contains('assert-failed')) {
@@ -416,11 +426,11 @@
 
                         if (assertLabel) {
                             let labelText = '';
-                            for (const node of assertLabel.childNodes) {
+                            assertLabel.childNodes.forEach(node => {
                                 if (node.nodeType === Node.TEXT_NODE) {
                                     labelText += node.textContent;
                                 }
-                            }
+                            });
                             labelText = labelText.replace(/^[✔︎✖︎\s]*/, '').trim();
                             text = `${assertIcon} ${labelText}`;
 
@@ -442,13 +452,15 @@
                                 }
                             }
                         }
+                    } else {
+                        const attachmentBtn = item.querySelector('button');
+                        if (attachmentBtn && attachmentBtn.textContent.includes('📎')) {
+                             text = attachmentBtn.textContent.trim();
+                        }
                     }
 
                     if (text) {
-                        const maxIndentLevel = 3;
-                        const currentIndentLevel = indent.length / 2;
-                        const actualIndent = currentIndentLevel <= maxIndentLevel ? indent : '      ';
-                        lines.push(actualIndent + text);
+                        lines.push(indent + text);
                     }
 
                     let nestedUl = null;
@@ -458,13 +470,12 @@
                     }
 
                     if (nestedUl) {
-                        const nextIndent = indent.length < 6 ? indent + '  ' : indent;
-                        processLogItems(nestedUl, nextIndent);
+                        processLogItems(nestedUl, indent + '  ');
                     }
                 });
             }
 
-            const topLevelUl = qa('ul', logContainer)[0];
+            const topLevelUl = logContainer.querySelector(':scope > ul');
             if (topLevelUl) {
                 processLogItems(topLevelUl);
             }
