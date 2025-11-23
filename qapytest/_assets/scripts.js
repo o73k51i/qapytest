@@ -352,9 +352,7 @@
                         lines.push(logText);
                     }
                 } else {
-                    // Clone the element to manipulate it without affecting the DOM
                     const clone = valueElement.cloneNode(true);
-                    // Remove details-actions (buttons) from the clone
                     const actions = clone.querySelector('.details-actions');
                     if (actions) {
                         actions.remove();
@@ -672,7 +670,6 @@
                     });
                 }
             } else if (filterWrapper) {
-                // Hide filter if no loggers found
                 filterWrapper.style.display = 'none';
             }
 
@@ -752,8 +749,44 @@
 
         updateCardStyles();
         bindCopyButtons();
+        bindAttachmentCopyButtons();
         bindModalButtons();
         bindAssertToggles();
+
+        function bindAttachmentCopyButtons() {
+            qa('.attachment-copy-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const modalContent = btn.closest('.modal-content');
+                    if (!modalContent) return;
+                    
+                    const modalBody = modalContent.querySelector('.modal-body');
+                    if (!modalBody) return;
+
+                    let textToCopy = '';
+                    const codeBlock = modalBody.querySelector('pre code');
+                    const img = modalBody.querySelector('img');
+
+                    if (codeBlock) {
+                        textToCopy = codeBlock.textContent;
+                    } else if (img) {
+                        textToCopy = img.src;
+                    } else {
+                        textToCopy = modalBody.textContent;
+                    }
+
+                    if (!textToCopy) return;
+
+                    try {
+                        await navigator.clipboard.writeText(textToCopy);
+                        const prevHtml = btn.innerHTML;
+                        btn.innerHTML = '<span>✓</span> Copy';
+                        btn.classList.add('copied');
+                        setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = prevHtml; }, 900);
+                    } catch (_e) { }
+                });
+            });
+        }
     }
 
     if (document.readyState === 'loading') {

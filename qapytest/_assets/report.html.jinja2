@@ -150,7 +150,10 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h3>{{ attachment.label|e }}</h3>
-                    <button class="modal-close" data-modal-close>&times;</button>
+                    <div class="modal-actions">
+                        <button class="details-btn attachment-copy-btn" type="button" title="Copy content"><span>📋</span> Copy</button>
+                        <button class="modal-close" data-modal-close>&times;</button>
+                    </div>
                 </div>
                 <div class="modal-body">
                 {% if attachment.content_type == "image" %}
