@@ -1103,6 +1103,46 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     margin-left: 2px;
 }
 
+.scroll-to-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--elev-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px var(--shadow);
+    backdrop-filter: var(--glass-blur);
+    z-index: 90;
+    transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.3s, border-color 0.3s;
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+}
+
+.scroll-to-top.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.scroll-to-top:hover {
+    background: var(--bg2);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.scroll-to-top svg {
+    width: 24px;
+    height: 24px;
+}
+
 @media (max-width: 768px) {
     .header {
         padding: 12px 16px;
