@@ -434,7 +434,12 @@
                         lines.push(actualIndent + text);
                     }
 
-                    const nestedUl = qa('ul', item).find(ul => ul.parentElement === item);
+                    let nestedUl = null;
+                    const stepChildren = item.querySelector('.step-children');
+                    if (stepChildren) {
+                        nestedUl = stepChildren.querySelector(':scope > ul');
+                    }
+
                     if (nestedUl) {
                         const nextIndent = indent.length < 6 ? indent + '  ' : indent;
                         processLogItems(nestedUl, nextIndent);
@@ -1023,10 +1028,12 @@
         });
 
         updateCardStyles();
+        bindStepToggles();
         bindCopyButtons();
         bindAttachmentCopyButtons();
         bindModalButtons();
         bindAssertToggles();
+        bindStepToggleAllButtons();
 
         function bindAttachmentCopyButtons() {
             qa('.attachment-copy-btn').forEach(btn => {
@@ -1062,6 +1069,53 @@
                         btn.classList.add('copied');
                         setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = prevHtml; }, 900);
                     } catch (_e) { }
+                });
+            });
+        }
+
+        function bindStepToggles() {
+            qa('.step-toggle').forEach(toggle => {
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const li = toggle.closest('li');
+                    const childrenContainer = li.querySelector('.step-children');
+                    if (childrenContainer) {
+                        const isHidden = childrenContainer.hidden;
+                        childrenContainer.hidden = !isHidden;
+                        if (isHidden) {
+                            toggle.classList.remove('collapsed');
+                        } else {
+                            toggle.classList.add('collapsed');
+                        }
+                    }
+                });
+            });
+        }
+
+        function bindStepToggleAllButtons() {
+            qa('.step-toggle-all-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isExpanded = btn.dataset.expanded === 'true';
+                    const container = btn.closest('.k').nextElementSibling;
+                    if (!container) return;
+
+                    const childrenContainers = container.querySelectorAll('.step-children');
+                    const toggles = container.querySelectorAll('.step-toggle');
+
+                    if (isExpanded) {
+                        // Collapse all
+                        childrenContainers.forEach(el => el.hidden = true);
+                        toggles.forEach(el => el.classList.add('collapsed'));
+                        btn.textContent = 'Expand All';
+                        btn.dataset.expanded = 'false';
+                    } else {
+                        // Expand all
+                        childrenContainers.forEach(el => el.hidden = false);
+                        toggles.forEach(el => el.classList.remove('collapsed'));
+                        btn.textContent = 'Collapse All';
+                        btn.dataset.expanded = 'true';
+                    }
                 });
             });
         }

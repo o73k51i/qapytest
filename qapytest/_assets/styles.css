@@ -1038,6 +1038,43 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     display: none !important;
 }
 
+.step-passed {
+    color: var(--passed-text);
+}
+
+.step-failed {
+    color: var(--failed-text);
+}
+
+.step-toggle {
+    cursor: pointer;
+    display: inline-block;
+    width: 16px;
+    text-align: center;
+    transition: transform 0.2s;
+    user-select: none;
+    margin-right: 4px;
+    color: var(--muted);
+}
+
+.step-toggle:hover {
+    color: var(--text);
+}
+
+.step-toggle.collapsed {
+    transform: rotate(-90deg);
+}
+
+.step-toggle-placeholder {
+    display: inline-block;
+    width: 16px;
+    margin-right: 4px;
+}
+
+.step-children {
+    padding-left: 8px;
+}
+
 @media (max-width: 768px) {
     .header {
         padding: 12px 16px;

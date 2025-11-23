@@ -92,7 +92,13 @@
                                 <div class="k">Result</div><div class="v"><span class="status {{ result.outcome }}">{{ result.details.headline|e }}</span></div>
                                 {% endif %}
                                 {% if result.execution_log %}
-                                <div class="k">Execution Log</div><div class="v mono">
+                                <div class="k">
+                                    Execution Log
+                                    <div style="margin-top: 4px;">
+                                        <button class="details-btn step-toggle-all-btn" type="button" data-expanded="false" style="font-size: 10px; padding: 2px 6px;">Expand All</button>
+                                    </div>
+                                </div>
+                                <div class="v mono">
                                     {% import '_log_tree.html.jinja2' as log_helpers %}
                                     {{ log_helpers.render_log_tree(result.execution_log, test_index, {'value': 0}, {'value': 0}) }}
                                 </div>
