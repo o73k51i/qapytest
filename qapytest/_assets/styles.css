@@ -127,7 +127,6 @@ body {
     transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.5s ease;
 }
 
-/* Default (Light Mode): Show Moon */
 .theme-toggle .theme-icon-moon {
     opacity: 1;
     transform: rotate(0) scale(1);
@@ -138,7 +137,6 @@ body {
     transform: rotate(90deg) scale(0.5);
 }
 
-/* Dark Mode: Show Sun */
 html[data-theme="dark"] .theme-toggle .theme-icon-moon {
     opacity: 0;
     transform: rotate(-90deg) scale(0.5);
@@ -583,14 +581,10 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     box-shadow: 0 12px 48px var(--shadow);
     width: 90%;
     max-width: 800px;
-    max-height: 85vh;
+    height: 85vh;
     display: flex;
     flex-direction: column;
     border: 1px solid var(--elev-border-strong)
-}
-
-.logs-modal-content {
-    height: 85vh;
 }
 
 .modal-header {
@@ -634,7 +628,6 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     display: block
 }
 
-/* Styles for details block content to fit within allocated space */
 .details .v pre {
     white-space: pre-wrap;
     word-wrap: break-word;
@@ -643,7 +636,6 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     max-width: 100%
 }
 
-/* Logs table styling */
 .logs-table {
     width: 100%;
     border-collapse: collapse;
@@ -680,11 +672,10 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     word-wrap: break-word;
     overflow-wrap: break-word;
     font-size: 12px;
-    max-width: 0; /* Forces the cell to take remaining space */
+    max-width: 0;
     width: 100%;
 }
 
-/* Log level colors */
 .log-level.DEBUG {
     background: rgba(142, 142, 147, 0.15);
     color: var(--muted);
@@ -710,7 +701,6 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     color: var(--xfailed-text);
 }
 
-/* Dark theme adjustments */
 [data-theme="dark"] .log-level.DEBUG {
     background: rgba(142, 142, 147, 0.22);
     color: var(--muted);
@@ -909,7 +899,43 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     border-color: var(--accent);
 }
 
-/* JSON Tree Styles */
+.attachment-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 8px;
+}
+
+.attachment-search {
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 12px;
+    width: 150px;
+}
+
+.search-highlight {
+    background-color: #ffeb3b;
+    color: #000;
+}
+
+.search-highlight.active {
+    background-color: #ff9800;
+    outline: 2px solid #e65100;
+}
+
+[data-theme="dark"] .search-highlight {
+    background-color: #665c00;
+    color: #fff;
+}
+
+[data-theme="dark"] .search-highlight.active {
+    background-color: #f57f17;
+    outline: 2px solid #ff6f00;
+}
+
 .json-tree {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 12px;
@@ -946,6 +972,10 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     color: var(--accent);
 }
 
+[data-theme="dark"] .json-number {
+    color: var(--details-label);
+}
+
 .json-boolean {
     color: var(--xfailed-text);
 }
@@ -975,10 +1005,6 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
 .json-collapsible {
     transition: height 0.2s ease, opacity 0.2s ease;
     overflow: hidden;
-}
-
-.json-collapsible.hidden {
-    display: none;
 }
 
 .json-placeholder {
@@ -1056,10 +1082,6 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     .modal-content {
         width: 95%;
         max-height: 90vh;
-    }
-
-    .logs-modal-content {
-        height: 90vh;
     }
 
     .modal-header {

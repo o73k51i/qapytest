@@ -461,12 +461,26 @@
 
                         const modalBody = modal.querySelector('.modal-body');
                         const preElement = modalBody.querySelector('pre code');
+                        const controls = modal.querySelector('.attachment-controls');
                         
                         if (preElement) {
                             if (modal.id.includes('logs-modal')) {
                                 formatLogsAsTable(preElement);
                             } else if (modal.id.includes('attachment-modal')) {
                                 formatJsonTree(preElement);
+                            }
+                        }
+
+                        if (controls) {
+                            const jsonTree = modalBody.querySelector('.json-tree');
+                            const logsTable = modalBody.querySelector('.logs-table');
+                            const codeBlock = modalBody.querySelector('pre code');
+                            
+                            if (jsonTree || logsTable || codeBlock) {
+                                controls.style.display = 'flex';
+                                setupAttachmentControls(modal, jsonTree || logsTable, codeBlock);
+                            } else {
+                                controls.style.display = 'none';
                             }
                         }
                     }
@@ -483,6 +497,139 @@
                     }
                 });
             });
+        }
+
+        function setupAttachmentControls(modal, jsonTree, codeBlock) {
+            const searchInput = modal.querySelector('.attachment-search');
+            const toggleAllBtn = modal.querySelector('.attachment-toggle-all-btn');
+            
+            let matches = [];
+            let currentMatchIndex = -1;
+
+            if (toggleAllBtn) {
+                toggleAllBtn.style.display = (jsonTree && jsonTree.classList.contains('json-tree')) ? '' : 'none';
+                
+                const newBtn = toggleAllBtn.cloneNode(true);
+                toggleAllBtn.parentNode.replaceChild(newBtn, toggleAllBtn);
+                
+                newBtn.addEventListener('click', () => {
+                    if (!jsonTree) return;
+                    const isExpanded = newBtn.dataset.expanded === 'true';
+                    const toggles = jsonTree.querySelectorAll('.json-toggle');
+                    const lists = jsonTree.querySelectorAll('.json-collapsible');
+                    const placeholders = jsonTree.querySelectorAll('.json-placeholder');
+                    
+                    if (isExpanded) {
+                        lists.forEach(l => l.classList.add('hidden'));
+                        placeholders.forEach(p => p.classList.remove('hidden'));
+                        toggles.forEach(t => t.classList.add('collapsed'));
+                        newBtn.textContent = 'Expand All';
+                        newBtn.dataset.expanded = 'false';
+                    } else {
+                        lists.forEach(l => l.classList.remove('hidden'));
+                        placeholders.forEach(p => p.classList.add('hidden'));
+                        toggles.forEach(t => t.classList.remove('collapsed'));
+                        newBtn.textContent = 'Collapse All';
+                        newBtn.dataset.expanded = 'true';
+                    }
+                });
+            }
+
+            if (searchInput) {
+                const newInput = searchInput.cloneNode(true);
+                searchInput.parentNode.replaceChild(newInput, searchInput);
+                
+                newInput.addEventListener('input', (e) => {
+                    const term = e.target.value.toLowerCase();
+                    matches = [];
+                    currentMatchIndex = -1;
+                    
+                    if (jsonTree) {
+                        jsonTree.querySelectorAll('.search-highlight').forEach(el => {
+                            const parent = el.parentNode;
+                            parent.replaceChild(document.createTextNode(el.textContent), el);
+                            parent.normalize();
+                        });
+
+                        if (!term) return;
+
+                        function highlightText(node) {
+                            if (node.nodeType === Node.TEXT_NODE) {
+                                const text = node.nodeValue;
+                                const lowerText = text.toLowerCase();
+                                const index = lowerText.indexOf(term);
+                                
+                                if (index >= 0) {
+                                    const span = document.createElement('span');
+                                    span.className = 'search-highlight';
+                                    const matchedText = text.substr(index, term.length);
+                                    span.textContent = matchedText;
+                                    
+                                    const after = node.splitText(index + term.length);
+                                    node.nodeValue = text.substr(0, index);
+                                    node.parentNode.insertBefore(span, after);
+                                    
+                                    matches.push(span);
+
+                                    highlightText(after);
+                                }
+                            } else if (node.nodeType === Node.ELEMENT_NODE && !node.classList.contains('json-toggle') && !node.classList.contains('json-placeholder')) {
+                                Array.from(node.childNodes).forEach(child => highlightText(child));
+                            }
+                        }
+
+                        highlightText(jsonTree);
+                    } else if (codeBlock) {
+                        const text = codeBlock.textContent;
+                        if (!term) {
+                            codeBlock.innerHTML = text;
+                            return;
+                        }
+                        
+                        const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                        codeBlock.innerHTML = text.replace(regex, '<span class="search-highlight">$1</span>');
+                        matches = Array.from(codeBlock.querySelectorAll('.search-highlight'));
+                    }
+                });
+
+                newInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (matches.length === 0) return;
+
+                        if (currentMatchIndex >= 0 && currentMatchIndex < matches.length) {
+                            matches[currentMatchIndex].classList.remove('active');
+                        }
+
+                        currentMatchIndex++;
+                        if (currentMatchIndex >= matches.length) {
+                            currentMatchIndex = 0;
+                        }
+
+                        const currentMatch = matches[currentMatchIndex];
+                        currentMatch.classList.add('active');
+                        
+                        if (jsonTree) {
+                            let el = currentMatch;
+                            while (el && el !== jsonTree) {
+                                if (el.tagName === 'UL' && el.classList.contains('json-collapsible') && el.classList.contains('hidden')) {
+                                    el.classList.remove('hidden');
+                                    
+                                    const parent = el.parentElement;
+                                    const placeholder = parent.querySelector(':scope > .json-placeholder');
+                                    if (placeholder) placeholder.classList.add('hidden');
+                                    
+                                    const toggle = parent.querySelector(':scope > .json-toggle');
+                                    if (toggle) toggle.classList.remove('collapsed');
+                                }
+                                el = el.parentElement;
+                            }
+                        }
+
+                        currentMatch.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                    }
+                });
+            }
         }
 
         function formatLogsAsTable(codeElement) {
@@ -747,7 +894,6 @@
                 const preElement = codeElement.parentElement;
                 preElement.parentElement.replaceChild(container, preElement);
             } catch (e) {
-                // Not valid JSON, leave as is
             }
         }
 

@@ -125,6 +125,9 @@
             <div class="modal-header">
                 <h3 class="mono">{{ decode_unicode_escapes(result.title)|e }}</h3>
                 <div class="modal-actions">
+                    <div class="attachment-controls" style="display: none;">
+                        <input type="text" class="attachment-search" placeholder="Highlight text..." />
+                    </div>
                     <div class="log-filter-wrapper">
                         <button class="details-btn log-filter-toggle">Filter Loggers ▾</button>
                         <div class="log-filter-menu" hidden>
@@ -151,6 +154,10 @@
                 <div class="modal-header">
                     <h3>{{ attachment.label|e }}</h3>
                     <div class="modal-actions">
+                        <div class="attachment-controls" style="display: none;">
+                            <input type="text" class="attachment-search" placeholder="Highlight text..." />
+                            <button class="details-btn attachment-toggle-all-btn" title="Expand/Collapse All" data-expanded="true">Collapse All</button>
+                        </div>
                         <button class="details-btn attachment-copy-btn" type="button" title="Copy content"><span>📋</span> Copy</button>
                         <button class="modal-close" data-modal-close>&times;</button>
                     </div>
