@@ -4,9 +4,17 @@
 {% for entry in log_list %}
     {% if entry.type == 'step' %}
         <li class="{{ 'step-passed' if entry.passed else 'step-failed' }}">
+            {% if entry.children %}
+                <span class="step-toggle collapsed">▼</span>
+            {% else %}
+                <span class="step-toggle-placeholder"></span>
+            {% endif %}
             {{ '✔︎' if entry.passed else '✖︎' }} <strong>Step:</strong> {{ entry.message|e }}
-            {# --- Recursive Call --- #}
-            {{ render_log_tree(entry.children, test_index, attachment_counter, assert_counter) }}
+            {% if entry.children %}
+                <div class="step-children" hidden>
+                    {{ render_log_tree(entry.children, test_index, attachment_counter, assert_counter) }}
+                </div>
+            {% endif %}
         </li>
     {% elif entry.type == 'assert' %}
         {% set _ = assert_counter.update({'value': assert_counter.value + 1}) %}
