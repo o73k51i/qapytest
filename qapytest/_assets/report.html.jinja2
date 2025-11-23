@@ -113,15 +113,13 @@
     </div>
 </main>
 
-{# --- Modals --- #}
 {% for result in results %}
     {% set details_id = 'details-' ~ loop.index %}
     {% set test_index = loop.index %}
-    {# Render modals for logs #}
     {% if result.details.captured_logs and result.details.captured_logs.strip() %}
     <div class="modal" id="logs-modal-{{ details_id }}" hidden>
         <div class="modal-overlay" data-modal-close></div>
-        <div class="modal-content logs-modal-content">
+        <div class="modal-content">
             <div class="modal-header">
                 <h3 class="mono">{{ decode_unicode_escapes(result.title)|e }}</h3>
                 <div class="modal-actions">
@@ -145,7 +143,6 @@
     </div>
     {% endif %}
 
-    {# Render modals for attachments #}
     {% for attachment in result.attachments %}
         {% set modal_id = 'attachment-modal-' ~ test_index ~ '-' ~ loop.index %}
          <div class="modal" id="{{ modal_id }}" hidden>
