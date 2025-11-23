@@ -461,8 +461,13 @@
 
                         const modalBody = modal.querySelector('.modal-body');
                         const preElement = modalBody.querySelector('pre code');
-                        if (preElement && modal.id.includes('logs-modal')) {
-                            formatLogsAsTable(preElement);
+                        
+                        if (preElement) {
+                            if (modal.id.includes('logs-modal')) {
+                                formatLogsAsTable(preElement);
+                            } else if (modal.id.includes('attachment-modal')) {
+                                formatJsonTree(preElement);
+                            }
                         }
                     }
                 });
@@ -705,15 +710,139 @@
             preElement.parentElement.replaceChild(table, preElement);
         }
 
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                const openModal = q('.modal:not([hidden])');
-                if (openModal) {
-                    openModal.hidden = true;
-                    document.body.style.overflow = '';
+        function formatJsonTree(codeElement) {
+            const text = codeElement.textContent;
+            try {
+                const json = JSON.parse(text);
+                const { node, toggleTarget } = createJsonTree(json);
+                const container = document.createElement('div');
+                container.className = 'json-tree';
+                container.dataset.raw = text;
+                
+                if (toggleTarget) {
+                    const toggle = document.createElement('span');
+                    toggle.className = 'json-toggle';
+                    toggle.textContent = '▼';
+                    
+                    const toggleFn = (e) => {
+                        e.stopPropagation();
+                        const isCollapsed = toggleTarget.list.classList.contains('hidden');
+                        if (isCollapsed) {
+                            toggleTarget.list.classList.remove('hidden');
+                            toggleTarget.placeholder.classList.add('hidden');
+                            toggle.classList.remove('collapsed');
+                        } else {
+                            toggleTarget.list.classList.add('hidden');
+                            toggleTarget.placeholder.classList.remove('hidden');
+                            toggle.classList.add('collapsed');
+                        }
+                    };
+                    toggle.addEventListener('click', toggleFn);
+                    toggleTarget.placeholder.addEventListener('click', toggleFn);
+                    container.appendChild(toggle);
                 }
+
+                container.appendChild(node);
+                
+                const preElement = codeElement.parentElement;
+                preElement.parentElement.replaceChild(container, preElement);
+            } catch (e) {
+                // Not valid JSON, leave as is
             }
-        });
+        }
+
+        function createJsonTree(data) {
+            if (data === null) return { node: createValueSpan('null', 'null'), toggleTarget: null };
+            if (typeof data === 'boolean') return { node: createValueSpan(data, 'boolean'), toggleTarget: null };
+            if (typeof data === 'number') return { node: createValueSpan(data, 'number'), toggleTarget: null };
+            if (typeof data === 'string') return { node: createValueSpan(`"${data}"`, 'string'), toggleTarget: null };
+
+            if (Array.isArray(data)) {
+                if (data.length === 0) return { node: createValueSpan('[]', 'null'), toggleTarget: null };
+                return createCollapsible(data, '[', ']');
+            }
+
+            if (typeof data === 'object') {
+                if (Object.keys(data).length === 0) return { node: createValueSpan('{}', 'null'), toggleTarget: null };
+                return createCollapsible(data, '{', '}');
+            }
+
+            return { node: document.createTextNode(String(data)), toggleTarget: null };
+        }
+
+        function createValueSpan(value, type) {
+            const span = document.createElement('span');
+            span.className = `json-${type}`;
+            span.textContent = value;
+            return span;
+        }
+
+        function createCollapsible(data, openChar, closeChar) {
+            const fragment = document.createDocumentFragment();
+            
+            fragment.appendChild(document.createTextNode(openChar));
+
+            const list = document.createElement('ul');
+            list.className = 'json-collapsible';
+            const isArray = Array.isArray(data);
+            const keys = isArray ? data : Object.keys(data);
+
+            keys.forEach((key, index) => {
+                const li = document.createElement('li');
+                const value = isArray ? key : data[key];
+                
+                const { node, toggleTarget } = createJsonTree(value);
+
+                if (toggleTarget) {
+                    const toggle = document.createElement('span');
+                    toggle.className = 'json-toggle';
+                    toggle.textContent = '▼';
+                    
+                    const toggleFn = (e) => {
+                        e.stopPropagation();
+                        const isCollapsed = toggleTarget.list.classList.contains('hidden');
+                        if (isCollapsed) {
+                            toggleTarget.list.classList.remove('hidden');
+                            toggleTarget.placeholder.classList.add('hidden');
+                            toggle.classList.remove('collapsed');
+                        } else {
+                            toggleTarget.list.classList.add('hidden');
+                            toggleTarget.placeholder.classList.remove('hidden');
+                            toggle.classList.add('collapsed');
+                        }
+                    };
+                    toggle.addEventListener('click', toggleFn);
+                    toggleTarget.placeholder.addEventListener('click', toggleFn);
+                    li.appendChild(toggle);
+                }
+
+                if (!isArray) {
+                    const keySpan = document.createElement('span');
+                    keySpan.className = 'json-key';
+                    keySpan.textContent = `"${key}": `;
+                    li.appendChild(keySpan);
+                }
+
+                li.appendChild(node);
+                
+                if (index < (isArray ? data.length : keys.length) - 1) {
+                    li.appendChild(document.createTextNode(','));
+                }
+                
+                list.appendChild(li);
+            });
+
+            fragment.appendChild(list);
+            
+            const placeholder = document.createElement('span');
+            placeholder.className = 'json-placeholder hidden';
+            placeholder.textContent = ' ... ';
+            fragment.appendChild(placeholder);
+
+            fragment.appendChild(document.createTextNode(closeChar));
+
+            return { node: fragment, toggleTarget: { list, placeholder } };
+        }
 
         function bindAssertToggles() {
             qa('[data-toggle-target]').forEach(element => {
@@ -766,8 +895,11 @@
                     let textToCopy = '';
                     const codeBlock = modalBody.querySelector('pre code');
                     const img = modalBody.querySelector('img');
+                    const jsonTree = modalBody.querySelector('.json-tree');
 
-                    if (codeBlock) {
+                    if (jsonTree) {
+                        textToCopy = jsonTree.dataset.raw || modalBody.textContent;
+                    } else if (codeBlock) {
                         textToCopy = codeBlock.textContent;
                     } else if (img) {
                         textToCopy = img.src;
