@@ -269,8 +269,12 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
 
 .table th:nth-child(1) { width: 50px; }
 .table th:nth-child(3) { width: 110px; }
-.table th:nth-child(4) { width: 180px; z-index: 11; }
+.table th:nth-child(4) { width: 25%; z-index: 11; }
 .table th:nth-child(5) { width: 130px; }
+
+.table td:nth-child(4) {
+    overflow-wrap: anywhere;
+}
 
 .table {
     width: 100%;
@@ -829,7 +833,8 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
 .th-filter-menu {
     position: absolute;
     top: 100%;
-    left: 0;
+    right: 0;
+    left: auto;
     margin-top: 4px;
     background: var(--elev-bg);
     border: 1px solid var(--elev-border-strong);
