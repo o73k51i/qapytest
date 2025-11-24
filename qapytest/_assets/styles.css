@@ -272,6 +272,10 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
 .table th:nth-child(4) { width: 180px; z-index: 11; }
 .table th:nth-child(5) { width: 130px; }
 
+.table td:nth-child(4) {
+    overflow-wrap: anywhere;
+}
+
 .table {
     width: 100%;
     border-collapse: separate;
