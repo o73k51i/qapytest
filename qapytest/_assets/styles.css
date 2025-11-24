@@ -833,7 +833,8 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
 .th-filter-menu {
     position: absolute;
     top: 100%;
-    left: 0;
+    right: 0;
+    left: auto;
     margin-top: 4px;
     background: var(--elev-bg);
     border: 1px solid var(--elev-border-strong);
