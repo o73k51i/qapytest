@@ -1,6 +1,7 @@
 """Module for pytest plugin that generates HTML reports."""
 
 import datetime
+import json
 from collections import defaultdict
 from pathlib import Path
 
@@ -168,3 +169,148 @@ class HtmlReportPlugin:
     def pytest_terminal_summary(self, terminalreporter: cfg.AnyType, exitstatus: int, config: pytest.Config) -> None:  # noqa: ARG002
         report_uri = Path(self.path).resolve().as_uri()
         terminalreporter.write_sep("=", f"HTML report: {report_uri}", blue=True)
+
+
+class JsonReportPlugin:
+    def __init__(self, config: pytest.Config, path: str) -> None:
+        self.path = path
+        self.config = config
+        self.session_start = datetime.datetime.now()
+        self.results: dict[str, dict[str, cfg.AnyType]] = {}
+        self.test_order: list[str] = []
+        self.totals: dict[str, int] = defaultdict(int)
+        self.collection_errors: list[dict[str, cfg.AnyType]] = []
+
+    def _safe_location(self, report: pytest.TestReport) -> tuple[str, int, str]:
+        try:
+            loc = getattr(report, "location", None)
+            if loc and isinstance(loc, tuple) and len(loc) >= 2:
+                return str(loc[0] or ""), int(loc[1] or 0), report.nodeid
+        except Exception:  # noqa: S110
+            pass
+        try:
+            path = getattr(report, "fspath", "") or ""
+            return str(path), 0, report.nodeid
+        except Exception:
+            return "", 0, getattr(report, "nodeid", "")
+
+    def pytest_runtest_logreport(self, report: pytest.TestReport) -> None:
+        nodeid = utils.decode_unicode_escapes(report.nodeid)
+        if nodeid not in self.results:
+            self.test_order.append(nodeid)
+            path, lineno, _ = self._safe_location(report)
+            self.results[nodeid] = {
+                "nodeid": nodeid,
+                "path": path,
+                "lineno": lineno,
+                "outcome": None,
+                "duration": 0.0,
+                "title": nodeid,
+                "components": [],
+                "details": {},
+                "execution_log": [],
+            }
+
+        record = self.results[nodeid]
+        record["duration"] += report.duration
+
+        for key, value in getattr(report, "user_properties", []):
+            if key == "title" and value:
+                record["title"] = str(value)
+            elif key == "components" and value:
+                record["components"] = [str(v) for v in value]
+            elif key == "execution_log":
+                record["execution_log"] = value
+
+        if getattr(report, "_soft_assert_only", False):
+            record["soft_assert_only"] = True
+
+        effective_outcome = utils.get_effective_outcome(report)
+
+        if report.when == "call":
+            record["outcome"] = effective_outcome
+        elif report.when in {"setup", "teardown"} and getattr(report, "outcome", None) in ("failed", "error"):
+            record["outcome"] = "error"
+
+        if details := utils.extract_report_details(report):
+            candidate = {**details, "_outcome": effective_outcome, "_phase": report.when}
+            if utils.is_better_details(record.get("details"), candidate, report):
+                record["details"] = candidate
+
+    def pytest_collectreport(self, report: pytest.CollectReport) -> None:
+        if report.failed:
+            try:
+                path = str(getattr(report, "fspath", "") or getattr(report, "nodeid", ""))
+            except Exception:
+                path = str(getattr(report, "nodeid", ""))
+
+            details = {"headline": "", "longrepr": "", "captured_stdout": "", "captured_logs": ""}
+            try:
+                if hasattr(report, "longrepr") and report.longrepr:
+                    longrepr_text = str(report.longrepr)
+                    details["headline"] = "Collection error"
+                    details["longrepr"] = longrepr_text
+            except Exception:  # noqa: S110
+                pass
+
+            self.collection_errors.append(
+                {
+                    "nodeid": utils.decode_unicode_escapes(getattr(report, "nodeid", "<collection>")),
+                    "path": path,
+                    "outcome": "error",
+                    "duration": getattr(report, "duration", 0.0),
+                    "details": {**details, "_outcome": "error", "_phase": "collect"},
+                },
+            )
+
+    def pytest_sessionfinish(self, session: cfg.AnyType, exitstatus: int) -> None:  # noqa: ARG002
+        results = self.collection_errors + [self.results[k] for k in self.test_order]
+
+        for r in results:
+            outcome = r.get("outcome") or "skipped"
+            r["outcome"] = outcome
+            self.totals[outcome] += 1
+
+            attachments = []
+
+            def _find_attachments(log_entries) -> None:  # noqa: ANN001
+                for entry in log_entries:
+                    if entry.get("type") == "attachment":
+                        attachments.append(entry)  # noqa: B023
+                    if entry.get("type") == "step":
+                        _find_attachments(entry.get("children", []))
+
+            _find_attachments(r.get("execution_log", []))
+            r["attachments"] = attachments
+
+        total = sum(self.totals.values())
+        passed = self.totals.get("passed", 0)
+        pass_rate = (passed / total * 100.0) if total else 0.0
+
+        session_finish = datetime.datetime.now()
+        report_data = {
+            "session_start": self.session_start.isoformat(),
+            "session_finish": session_finish.isoformat(),
+            "stats": {
+                "total": total,
+                "duration_total": sum(r.get("duration", 0.0) for r in results),
+                "pass_rate": pass_rate,
+                **self.totals,
+            },
+            "results": results,
+        }
+
+        try:
+            report_path = Path(self.path).resolve()
+            report_path.parent.mkdir(parents=True, exist_ok=True)
+            disable_unicode = self.config.getoption("disable_unicode")
+            report_path.write_text(
+                json.dumps(report_data, indent=2, ensure_ascii=disable_unicode),
+                encoding="utf-8",
+            )
+        except Exception as e:
+            print(f"\nERROR: Could not generate JSON report: {e}")  # noqa: T201
+
+    def pytest_terminal_summary(self, terminalreporter: cfg.AnyType, exitstatus: int, config: pytest.Config) -> None:  # noqa: ARG002
+        report_uri = Path(self.path).resolve().as_uri()
+        terminalreporter.write_sep("=", f"JSON report: {report_uri}", blue=True)
