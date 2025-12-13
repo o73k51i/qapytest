@@ -2,7 +2,11 @@
 
 import logging
 
-import redis
+try:
+    import redis
+except ImportError as e:
+    msg = "The 'redis' package is required to use Redis client. Install it with: pip install \"qapytest[redis]\""
+    raise ImportError(msg) from e
 
 
 class RedisClient(redis.Redis):

@@ -4,7 +4,11 @@ import json
 import logging
 import re
 
-from httpx import Client, Response
+try:
+    from httpx import Client, Response
+except ImportError as e:
+    msg = "The 'httpx' package is required to use HTTP client. Install it with: pip install \"qapytest[http]\""
+    raise ImportError(msg) from e
 
 from qapytest._config import AnyType
 
