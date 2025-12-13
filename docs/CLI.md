@@ -28,7 +28,7 @@ Below are the available options, their purpose, and usage examples.
 - **`--disable-unicode`** : disable Unicode character display in 
   terminal output for compatibility with older terminals or CI systems.
 
-### Behavior with `.env`
+## Behavior with `.env`
 
 - If the `--env-file` option is not provided, the plugin will try to load
   `.env` in the working directory.
@@ -40,7 +40,7 @@ Below are the available options, their purpose, and usage examples.
 
 The `.env` format is plain: `KEY=VALUE`. Comments and empty lines are ignored.
 
-#### Usage examples (env)
+### Usage examples (env)
 
 ```bash
 pytest --env-file
@@ -50,7 +50,7 @@ pytest --env-file=tests/.env
 pytest --env-file=.env --env-override
 ```
 
-#### Unicode display in terminal
+## Unicode display in terminal
 
 By default, QaPyTest displays Unicode characters (Cyrillic, Arabic, Chinese, etc.) 
 correctly in terminal output for test names with parametrized IDs. If you 
@@ -65,7 +65,7 @@ pytest --disable-unicode --report-html
 pytest --report-html
 ```
 
-### Playwright Options (when using browser automation)
+## Playwright Options (when using browser automation)
 
 For browser automation testing, install Playwright browsers:
 
@@ -90,7 +90,7 @@ QaPyTest includes pytest-playwright, which adds these additional CLI options:
 - **`--tracing {on,off,retain-on-failure}`** : record traces for tests.
 - **`--output DIR`** : directory for test output (videos, screenshots, traces).
 
-#### Browser automation examples
+### Browser automation examples
 
 ```bash
 # Run browser tests with default browser (chromium)
@@ -240,23 +240,6 @@ pytest --env-file=.env.test --env-override \
 # Full run with all features
 pytest --env-file=.env --report-html=report.html \
        --report-title="Test Run $(date)" \
-       --log-level=INFO
-```
-
-### Complete example with all features
-
-```bash
-# Comprehensive test run with browser automation
-pytest --env-file=.env \
-       --browser chromium \
-       --headed \
-       --video retain-on-failure \
-       --screenshot only-on-failure \
-       --tracing retain-on-failure \
-       --output test-results \
-       --report-html=reports/browser-tests.html \
-       --report-title="Browser Automation Tests" \
-       --report-theme=auto \
        --log-level=INFO
 ```
 
