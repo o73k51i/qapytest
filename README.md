@@ -220,6 +220,8 @@ def test_user_login():
   (default — `./.env`).
 - **`--env-override`** : if set, values from the `.env` file will override
   existing environment variables.
+- **`--report-json [PATH]`** : create a JSON report with test results; optionally
+  specify a path (default — `./report.json`).
 - **`--report-html [PATH]`** : create a self-contained HTML report; optionally
   specify a path (default — `report.html`).
 - **`--report-title NAME`** : set the HTML report title.
