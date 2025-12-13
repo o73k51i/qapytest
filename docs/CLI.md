@@ -15,6 +15,8 @@ Below are the available options, their purpose, and usage examples.
   (by default it will try to load `./.env` if it exists).
 - **`--env-override`** : if set, values from `.env` will override existing
   environment variables.
+- **`--report-json [PATH]`** : create a JSON report with test results; optionally
+  specify a path (default — `./report.json`).
 - **`--report-html [PATH]`** : create a self-contained HTML report; optionally
   specify a path (default — `./report.html`).
 - **`--report-title NAME`** : set the HTML report title (default — "QAPyTest
@@ -99,6 +101,88 @@ pytest --browser firefox --headed --report-html
 
 # Run tests with WebKit (Safari engine)
 pytest --browser webkit --report-html
+```
+
+## JSON report generation behavior
+
+The plugin collects test execution logs and, if `--report-json` is specified,
+produces a JSON file with all test results, metrics, execution logs, and attachments.
+This is useful for programmatic processing, CI/CD integration, or feeding data
+into custom dashboards and analysis tools.
+
+### JSON report structure
+
+The JSON report contains:
+- **session metadata**: start and finish timestamps
+- **stats**: aggregated statistics (total tests, pass rate, failed/passed counts, duration)
+- **results**: detailed information for each test including outcome, duration, execution logs, steps, and attachments
+
+### Example JSON report
+
+```json
+{
+  "session_start": "2025-12-13T07:52:08.659266",
+  "session_finish": "2025-12-13T07:52:08.724639",
+  "stats": {
+    "total": 3,
+    "duration_total": 0.025369666051119566,
+    "pass_rate": 66.66666666666666,
+    "failed": 1,
+    "passed": 2
+  },
+  "results": [
+    {
+      "nodeid": "test_example.py::test_sample[1]",
+      "path": "test_example.py",
+      "lineno": 5,
+      "outcome": "failed",
+      "duration": 0.024913958040997386,
+      "title": "Sample test",
+      "components": ["smoke"],
+      "details": {
+        "headline": "One or more assertions failed",
+        "longrepr": "One or more assertions failed.\n\t✖︎ Check failed [Value = 1]"
+      },
+      "execution_log": [
+        {
+          "type": "step",
+          "message": "Verify value",
+          "passed": false,
+          "children": [
+            {
+              "type": "assert",
+              "label": "Value check",
+              "passed": false,
+              "details": "Expected 2, got 1"
+            }
+          ]
+        }
+      ],
+      "attachments": [
+        {
+          "type": "attachment",
+          "label": "Screenshot",
+          "data": "base64_encoded_data...",
+          "content_type": "image/png"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Usage examples (json)
+
+- Simple run and create a JSON report:
+
+```bash
+pytest --report-json
+```
+
+- Specify a custom path for the JSON report:
+
+```bash
+pytest --report-json=reports/run1.json
 ```
 
 ## HTML report generation behavior
