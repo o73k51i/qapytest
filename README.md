@@ -25,7 +25,8 @@ debugging needs.
 
 ## ⚙️ Key features
 
-- **HTML report generation:** simple report at `report.html`.
+- **HTML report generation:** beautiful self-contained report at `report.html`.
+- **JSON report generation:** structured data report at `report.json` for programmatic processing and CI/CD integration.
 - **Soft assertions:** allow collecting multiple failures in a single run
   without immediately ending the test.
 - **Advanced steps:** structured logging of test steps for better report
