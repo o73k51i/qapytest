@@ -900,6 +900,19 @@ html[data-theme="dark"] .theme-toggle .theme-icon-sun {
     color: var(--muted);
 }
 
+.log-filter-toggle.has-active-filters {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.log-filter-toggle.has-active-filters::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    background-color: var(--accent);
+    border-radius: 50%;
+}
+
 .th-filter-search,
 .log-filter-search {
     width: 100%;

@@ -822,6 +822,15 @@
                     const checkboxes = Array.from(filterList.querySelectorAll('input[type="checkbox"]'));
                     const checkedLoggers = new Set(checkboxes.filter(cb => cb.checked).map(cb => cb.value));
                     
+                    if (filterToggle) {
+                        const hasUnchecked = checkboxes.some(cb => !cb.checked);
+                        if (hasUnchecked) {
+                            filterToggle.classList.add('has-active-filters');
+                        } else {
+                            filterToggle.classList.remove('has-active-filters');
+                        }
+                    }
+
                     const rows = table.querySelectorAll('tr');
                     rows.forEach(row => {
                         const logger = row.dataset.logger;
