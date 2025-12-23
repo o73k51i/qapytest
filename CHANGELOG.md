@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 📊 **JSON Report** - added `--report-json` option to generate structured JSON reports, enabling easy integration of test results with other tools and CI/CD pipelines.
 - 🎨 **Log Filter Indicator** - added a visual indicator for active filters in the HTML report log window.
+- 🏷️ **Component Markers** - each component is now automatically registered as a pytest marker, allowing tests to be selected using standard marker expressions (e.g., `-m "api and login"`).
 
 ### Enhanced
 
