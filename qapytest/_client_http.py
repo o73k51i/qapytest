@@ -1,6 +1,10 @@
 """Module providing a simple GraphQL client with using httpx for testing APIs."""
 
-from httpx import Response
+try:
+    from httpx import Response
+except ImportError as e:
+    msg = "The 'httpx' package is required to use HTTP client. Install it with: pip install \"qapytest[http]\""
+    raise ImportError(msg) from e
 
 from qapytest._config import AnyType
 from qapytest._config_http import BaseHttpClient
