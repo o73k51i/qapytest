@@ -575,18 +575,34 @@ wheels = [
 
 [[package]]
 name = "qapytest"
-version = "0.3.6"
+version = "0.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "faker" },
-    { name = "httpx" },
     { name = "jinja2" },
     { name = "jsonschema" },
     { name = "pytest" },
-    { name = "pytest-playwright" },
     { name = "python-dotenv" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "httpx" },
+    { name = "pytest-playwright" },
     { name = "redis" },
     { name = "sqlalchemy" },
+]
+http = [
+    { name = "httpx" },
+]
+redis = [
+    { name = "redis" },
+]
+sql = [
+    { name = "sqlalchemy" },
+]
+web = [
+    { name = "pytest-playwright" },
 ]
 
 [package.dev-dependencies]
@@ -598,15 +614,20 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "faker", specifier = ">=37.11.0" },
-    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'all'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'http'", specifier = ">=0.28.1" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "jsonschema", specifier = ">=4.25.1" },
     { name = "pytest", specifier = ">=8.4.2" },
-    { name = "pytest-playwright", specifier = ">=0.7.1" },
+    { name = "pytest-playwright", marker = "extra == 'all'", specifier = ">=0.7.1" },
+    { name = "pytest-playwright", marker = "extra == 'web'", specifier = ">=0.7.1" },
     { name = "python-dotenv", specifier = ">=1.1.1" },
-    { name = "redis", specifier = ">=6.4.0" },
-    { name = "sqlalchemy", specifier = ">=2.0.43" },
+    { name = "redis", marker = "extra == 'all'", specifier = ">=6.4.0" },
+    { name = "redis", marker = "extra == 'redis'", specifier = ">=6.4.0" },
+    { name = "sqlalchemy", marker = "extra == 'all'", specifier = ">=2.0.43" },
+    { name = "sqlalchemy", marker = "extra == 'sql'", specifier = ">=2.0.43" },
 ]
+provides-extras = ["http", "sql", "web", "redis", "all"]
 
 [package.metadata.requires-dev]
 dev = [

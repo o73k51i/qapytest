@@ -3,8 +3,12 @@
 import logging
 import re
 
-from sqlalchemy import create_engine, text
-from sqlalchemy.exc import SQLAlchemyError
+try:
+    from sqlalchemy import create_engine, text
+    from sqlalchemy.exc import SQLAlchemyError
+except ImportError as e:
+    msg = "The 'sqlalchemy' package is required to use SQL client. Install it with: pip install \"qapytest[sql]\""
+    raise ImportError(msg) from e
 
 from qapytest._config import AnyType
 

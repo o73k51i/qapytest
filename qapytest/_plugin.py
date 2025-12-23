@@ -10,6 +10,7 @@ of Pytest.
 from __future__ import annotations
 
 import shutil
+import warnings
 from collections.abc import Generator
 from pathlib import Path
 
@@ -61,6 +62,16 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         help="Theme for the HTML report: light, dark, or auto (default).",
     )
     group.addoption(
+        "--report-json",
+        action="store",
+        dest="report_json",
+        metavar="PATH",
+        nargs="?",
+        const="report.json",
+        default=None,
+        help="Create a JSON report with test results.",
+    )
+    group.addoption(
         "--max-attachment-bytes",
         action="store",
         dest="max_attachment_bytes",
@@ -83,6 +94,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
     config.addinivalue_line("markers", "title(name): Custom display title for a test in the HTML report.")
     config.addinivalue_line("markers", "component(*names): Component labels for a test in the HTML report.")
+    config.addinivalue_line("markers", "component_marker: Marker for tests with components.")
 
     cfg.ATTACH_LIMIT_BYTES = config.getoption("max_attachment_bytes")
 
@@ -118,20 +130,27 @@ def pytest_configure(config: pytest.Config) -> None:
             pass
 
     report_path = config.getoption("report_html")
-    if not report_path:
-        return
+    if report_path:
+        report_title = config.getoption("report_title")
+        report_theme = config.getoption("report_theme")
+        plugin = report.HtmlReportPlugin(config, report_path, report_title, report_theme)
+        config._html_report_plugin = plugin  # type: ignore[attr-defined]  # noqa: SLF001
+        config.pluginmanager.register(plugin, "_html_report_plugin")
 
-    report_title = config.getoption("report_title")
-    report_theme = config.getoption("report_theme")
-    plugin = report.HtmlReportPlugin(config, report_path, report_title, report_theme)
-    config._html_report_plugin = plugin  # type: ignore[attr-defined]  # noqa: SLF001
-    config.pluginmanager.register(plugin, "_html_report_plugin")
+    json_report_path = config.getoption("report_json")
+    if json_report_path:
+        json_plugin = report.JsonReportPlugin(config, json_report_path)
+        config._json_report_plugin = json_plugin  # type: ignore[attr-defined]  # noqa: SLF001
+        config.pluginmanager.register(json_plugin, "_json_report_plugin")
 
 
 def pytest_unconfigure(config: pytest.Config) -> None:
     plugin = getattr(config, "_html_report_plugin", None)
     if plugin is not None:
         config.pluginmanager.unregister(plugin, name="_html_report_plugin")
+    json_plugin = getattr(config, "_json_report_plugin", None)
+    if json_plugin is not None:
+        config.pluginmanager.unregister(json_plugin, name="_json_report_plugin")
 
 
 def pytest_runtest_setup(item: pytest.Item) -> None:
@@ -204,18 +223,30 @@ def pytest_runtest_makereport(item: pytest.Item, call: cfg.AnyType) -> Generator
         report.longrepr = utils.decode_unicode_escapes(str(report.longrepr))
 
 
-def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:  # noqa: ARG001
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    registered_component_markers = set()
+
     for item in items:
         title_marker = item.get_closest_marker("title")
-        if title_marker and title_marker.args:  # noqa: SIM102
-            if title := str(title_marker.args[0]):
-                item.user_properties.append(("title", title))
+        if title_marker and title_marker.args and (title := str(title_marker.args[0])):
+            item.user_properties.append(("title", title))
+
         components, seen_components = [], set()
         for marker in item.iter_markers(name="component"):
             for arg in marker.args:
                 if isinstance(arg, str) and arg and arg not in seen_components:
                     seen_components.add(arg)
                     components.append(arg)
+
+                    component_lower = arg.lower().replace(" ", "_")
+                    if component_lower not in registered_component_markers:
+                        config.addinivalue_line("markers", f"{component_lower}: Component marker for filtering tests.")
+                        registered_component_markers.add(component_lower)
+
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", pytest.PytestUnknownMarkWarning)
+                        item.add_marker(getattr(pytest.mark, component_lower))
+
         if components:
             item.user_properties.append(("components", tuple(components)))
 

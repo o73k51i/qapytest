@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-12-23
+
+### Added
+
+- 📊 **JSON Report** - added `--report-json` option to generate structured JSON reports, enabling easy integration of test results with other tools and CI/CD pipelines.
+- 🎨 **Log Filter Indicator** - added a visual indicator for active filters in the HTML report log window.
+- 🏷️ **Component Markers** - each component is now automatically registered as a pytest marker, allowing tests to be selected using standard marker expressions (e.g., `-m "api and login"`).
+
+### Enhanced
+
+- 🔍 **HTML Report Search** - improved search functionality to support multiple search terms. You can now enter multiple keywords separated by spaces to filter tests that match all criteria (AND logic).
+
+### Changed
+
+- 📦 **Modular Installation** - changed package installation structure. Clients (HTTP, SQL, Redis, Playwright) are now separated as optional dependencies, allowing installation of only necessary components.
+- 📚 **Documentation** - updated project documentation, added instructions for the new installation method and JSON report usage.
+
+### Fixed
+
+- 🐛 **HTTP Logging** - fixed display of query parameters in HTTP client logs. Parameters are now automatically decoded (unquoted) for better readability in the HTML report.
+- 🌐 **HTTP Port Logging** - fixed HttpClient logging to correctly display the port number in URLs when present.
+
 ## [0.3.6] - 2025-11-24
 
 ### Fixed
@@ -185,6 +207,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable attachment size limits
 - Professional report styling with responsive design
 
+[0.4.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.4.0
 [0.3.6]: https://github.com/o73k51i/qapytest/releases/tag/v0.3.6
 [0.3.5]: https://github.com/o73k51i/qapytest/releases/tag/v0.3.5
 [0.3.4]: https://github.com/o73k51i/qapytest/releases/tag/v0.3.4

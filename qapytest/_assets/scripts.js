@@ -255,10 +255,11 @@
         }
 
         const searchInput = q('#search');
-        let searchTerm = '';
+        let searchTerms = [];
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
-                searchTerm = e.target.value.toLowerCase();
+                const val = e.target.value.toLowerCase();
+                searchTerms = val.split(/\s+/).filter(t => t.length > 0);
                 applyFilters();
             });
         }
@@ -288,7 +289,7 @@
                 const rowComponents = JSON.parse(row.dataset.components || '[]');
 
                 const statusMatch = filters.size === 0 || filters.has(status);
-                const searchMatch = !searchTerm || text.includes(searchTerm);
+                const searchMatch = searchTerms.length === 0 || searchTerms.every(term => text.includes(term));
                 
                 let componentMatch = true;
                 if (!selectedComponents.has('all')) {
@@ -822,6 +823,15 @@
                     const checkboxes = Array.from(filterList.querySelectorAll('input[type="checkbox"]'));
                     const checkedLoggers = new Set(checkboxes.filter(cb => cb.checked).map(cb => cb.value));
                     
+                    if (filterToggle) {
+                        const hasUnchecked = checkboxes.some(cb => !cb.checked);
+                        if (hasUnchecked) {
+                            filterToggle.classList.add('has-active-filters');
+                        } else {
+                            filterToggle.classList.remove('has-active-filters');
+                        }
+                    }
+
                     const rows = table.querySelectorAll('tr');
                     rows.forEach(row => {
                         const logger = row.dataset.logger;
@@ -1086,7 +1096,7 @@
 
                 if (searchInput) {
                     searchInput.value = '';
-                    searchTerm = '';
+                    searchTerms = [];
                 }
 
                 applyFilters();

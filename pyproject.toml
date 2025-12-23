@@ -1,6 +1,6 @@
 [project]
 name = "qapytest"
-version = "0.3.6"
+version = "0.4.0"
 description = "A powerful testing framework based on pytest, specifically designed for QA engineers"
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
@@ -24,14 +24,30 @@ classifiers = [
 ]
 dependencies = [
     "faker>=37.11.0",
-    "httpx>=0.28.1",
     "jinja2>=3.1.6",
     "jsonschema>=4.25.1",
     "pytest>=8.4.2",
-    "pytest-playwright>=0.7.1",
     "python-dotenv>=1.1.1",
-    "redis>=6.4.0",
+]
+
+[project.optional-dependencies]
+http = [
+    "httpx>=0.28.1",
+]
+sql = [
     "sqlalchemy>=2.0.43",
+]
+web = [
+    "pytest-playwright>=0.7.1",
+]
+redis = [
+    "redis>=6.4.0",
+]
+all = [
+    "httpx>=0.28.1",
+    "sqlalchemy>=2.0.43",
+    "pytest-playwright>=0.7.1",
+    "redis>=6.4.0",
 ]
 
 [project.urls]

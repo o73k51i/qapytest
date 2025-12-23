@@ -15,6 +15,8 @@ Below are the available options, their purpose, and usage examples.
   (by default it will try to load `./.env` if it exists).
 - **`--env-override`** : if set, values from `.env` will override existing
   environment variables.
+- **`--report-json [PATH]`** : create a JSON report with test results; optionally
+  specify a path (default — `./report.json`).
 - **`--report-html [PATH]`** : create a self-contained HTML report; optionally
   specify a path (default — `./report.html`).
 - **`--report-title NAME`** : set the HTML report title (default — "QAPyTest
@@ -26,7 +28,7 @@ Below are the available options, their purpose, and usage examples.
 - **`--disable-unicode`** : disable Unicode character display in 
   terminal output for compatibility with older terminals or CI systems.
 
-### Behavior with `.env`
+## Behavior with `.env`
 
 - If the `--env-file` option is not provided, the plugin will try to load
   `.env` in the working directory.
@@ -38,7 +40,7 @@ Below are the available options, their purpose, and usage examples.
 
 The `.env` format is plain: `KEY=VALUE`. Comments and empty lines are ignored.
 
-#### Usage examples (env)
+### Usage examples (env)
 
 ```bash
 pytest --env-file
@@ -48,7 +50,7 @@ pytest --env-file=tests/.env
 pytest --env-file=.env --env-override
 ```
 
-#### Unicode display in terminal
+## Unicode display in terminal
 
 By default, QaPyTest displays Unicode characters (Cyrillic, Arabic, Chinese, etc.) 
 correctly in terminal output for test names with parametrized IDs. If you 
@@ -63,7 +65,7 @@ pytest --disable-unicode --report-html
 pytest --report-html
 ```
 
-### Playwright Options (when using browser automation)
+## Playwright Options (when using browser automation)
 
 For browser automation testing, install Playwright browsers:
 
@@ -88,7 +90,7 @@ QaPyTest includes pytest-playwright, which adds these additional CLI options:
 - **`--tracing {on,off,retain-on-failure}`** : record traces for tests.
 - **`--output DIR`** : directory for test output (videos, screenshots, traces).
 
-#### Browser automation examples
+### Browser automation examples
 
 ```bash
 # Run browser tests with default browser (chromium)
@@ -99,6 +101,88 @@ pytest --browser firefox --headed --report-html
 
 # Run tests with WebKit (Safari engine)
 pytest --browser webkit --report-html
+```
+
+## JSON report generation behavior
+
+The plugin collects test execution logs and, if `--report-json` is specified,
+produces a JSON file with all test results, metrics, execution logs, and attachments.
+This is useful for programmatic processing, CI/CD integration, or feeding data
+into custom dashboards and analysis tools.
+
+### JSON report structure
+
+The JSON report contains:
+- **session metadata**: start and finish timestamps
+- **stats**: aggregated statistics (total tests, pass rate, failed/passed counts, duration)
+- **results**: detailed information for each test including outcome, duration, execution logs, steps, and attachments
+
+### Example JSON report
+
+```json
+{
+  "session_start": "2025-12-13T07:52:08.659266",
+  "session_finish": "2025-12-13T07:52:08.724639",
+  "stats": {
+    "total": 3,
+    "duration_total": 0.025369666051119566,
+    "pass_rate": 66.66666666666666,
+    "failed": 1,
+    "passed": 2
+  },
+  "results": [
+    {
+      "nodeid": "test_example.py::test_sample[1]",
+      "path": "test_example.py",
+      "lineno": 5,
+      "outcome": "failed",
+      "duration": 0.024913958040997386,
+      "title": "Sample test",
+      "components": ["smoke"],
+      "details": {
+        "headline": "One or more assertions failed",
+        "longrepr": "One or more assertions failed.\n\t✖︎ Check failed [Value = 1]"
+      },
+      "execution_log": [
+        {
+          "type": "step",
+          "message": "Verify value",
+          "passed": false,
+          "children": [
+            {
+              "type": "assert",
+              "label": "Value check",
+              "passed": false,
+              "details": "Expected 2, got 1"
+            }
+          ]
+        }
+      ],
+      "attachments": [
+        {
+          "type": "attachment",
+          "label": "Screenshot",
+          "data": "base64_encoded_data...",
+          "content_type": "image/png"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Usage examples (json)
+
+- Simple run and create a JSON report:
+
+```bash
+pytest --report-json
+```
+
+- Specify a custom path for the JSON report:
+
+```bash
+pytest --report-json=reports/run1.json
 ```
 
 ## HTML report generation behavior
@@ -150,36 +234,9 @@ pytest --env-file=.env.test --env-override \
     execution of all tests
   - Recommended level: `INFO` or `DEBUG` for detailed client operation logging
 
-### Recommended run
-
-```bash
-# Full run with all features
-pytest --env-file=.env --report-html=report.html \
-       --report-title="Test Run $(date)" \
-       --log-level=INFO
-```
-
 ### Complete example with all features
 
 ```bash
-# Comprehensive test run with browser automation
-pytest --env-file=.env \
-       --browser chromium \
-       --headed \
-       --video retain-on-failure \
-       --screenshot only-on-failure \
-       --tracing retain-on-failure \
-       --output test-results \
-       --report-html=reports/browser-tests.html \
-       --report-title="Browser Automation Tests" \
-       --report-theme=auto \
-       --log-level=INFO
-```
-
-### Complete example with all features
-
-```bash
-# Comprehensive test run with browser automation
 pytest --env-file=.env \
        --browser chromium \
        --headed \

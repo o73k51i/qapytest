@@ -3,8 +3,13 @@
 import json
 import logging
 import re
+from urllib.parse import unquote
 
-from httpx import Client, Response
+try:
+    from httpx import Client, Response
+except ImportError as e:
+    msg = "The 'httpx' package is required to use HTTP client. Install it with: pip install \"qapytest[http]\""
+    raise ImportError(msg) from e
 
 from qapytest._config import AnyType
 
@@ -150,13 +155,14 @@ class BaseHttpClient(Client):
     def _log_request(self, resp: Response) -> None:
         """Log details of the HTTP request."""
         # Connected URL and method
+        port = f":{resp.url.port}" if resp.url.port else ""
         self._logger.info(
-            f"Sending HTTP [{resp.request.method}] request to: {resp.url.scheme}://{resp.url.host}{resp.url.path}",
+            f"Sending HTTP [{resp.request.method}] request to: {resp.url.scheme}://{resp.url.host}{port}{resp.url.path}",
         )
 
         # Query params
         if resp.url.params:
-            sanitized_params = self._mask_sensitive_text_patterns(str(resp.url.params))
+            sanitized_params = self._mask_sensitive_text_patterns(unquote(str(resp.url.params)))
             self._logger.debug(f"Request query params: {sanitized_params}")
 
         # Headers
