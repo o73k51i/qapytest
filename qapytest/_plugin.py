@@ -10,6 +10,7 @@ of Pytest.
 from __future__ import annotations
 
 import shutil
+import warnings
 from collections.abc import Generator
 from pathlib import Path
 
@@ -242,7 +243,9 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
                         config.addinivalue_line("markers", f"{component_lower}: Component marker for filtering tests.")
                         registered_component_markers.add(component_lower)
 
-                    item.add_marker(getattr(pytest.mark, component_lower))
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", pytest.PytestUnknownMarkWarning)
+                        item.add_marker(getattr(pytest.mark, component_lower))
 
         if components:
             item.user_properties.append(("components", tuple(components)))
