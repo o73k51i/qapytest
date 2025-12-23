@@ -3,6 +3,7 @@
 import json
 import logging
 import re
+from urllib.parse import unquote
 
 try:
     from httpx import Client, Response
@@ -160,7 +161,7 @@ class BaseHttpClient(Client):
 
         # Query params
         if resp.url.params:
-            sanitized_params = self._mask_sensitive_text_patterns(str(resp.url.params))
+            sanitized_params = self._mask_sensitive_text_patterns(unquote(str(resp.url.params)))
             self._logger.debug(f"Request query params: {sanitized_params}")
 
         # Headers
