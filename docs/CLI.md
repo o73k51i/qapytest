@@ -234,19 +234,9 @@ pytest --env-file=.env.test --env-override \
     execution of all tests
   - Recommended level: `INFO` or `DEBUG` for detailed client operation logging
 
-### Recommended run
-
-```bash
-# Full run with all features
-pytest --env-file=.env --report-html=report.html \
-       --report-title="Test Run $(date)" \
-       --log-level=INFO
-```
-
 ### Complete example with all features
 
 ```bash
-# Comprehensive test run with browser automation
 pytest --env-file=.env \
        --browser chromium \
        --headed \

@@ -1,6 +1,18 @@
 # Installation Guide
 
-This guide explains how to install **qapytest** with optional components based on your needs.
+This guide explains how to install **QaPyTest** with optional components based
+on your needs.
+
+- [Basic Installation](#basic-installation)
+- [Optional Components](#optional-components)
+  - [HTTP Client](#http-client)
+  - [SQL Client](#sql-client)
+  - [Redis Client](#redis-client)
+  - [Web Testing (Playwright)](#web-testing-playwright)
+- [Multiple Components](#multiple-components)
+- [All Components](#all-components)
+- [Compatibility](#compatibility)
+
 
 ## Basic Installation
 
@@ -12,13 +24,16 @@ pip install qapytest
 
 This includes:
 - Pytest integration
-- Test steps and reporting
+- Test steps
 - Soft assertions
+- Attachment
+- Reporting
 - Basic utilities
 
 ## Optional Components
 
-qapytest supports optional dependencies for different features. You can install only what you need.
+**QaPyTest** supports optional dependencies for different features. You can
+install only what you need.
 
 ### HTTP Client
 
@@ -31,7 +46,6 @@ pip install "qapytest[http]"
 Includes:
 - HTTP client with support for REST APIs
 - Request/response handling
-- Built-in assertions for HTTP responses
 
 ### SQL Client
 
@@ -43,7 +57,7 @@ pip install "qapytest[sql]"
 
 Includes:
 - SQL database connections
-- Query execution and result validation
+- Query execution
 - Support for multiple database engines
 
 **Additional Step**: Install a database driver for your database engine:
@@ -55,7 +69,20 @@ Includes:
 - SQL Server: `pip install pyodbc`
 - Or any other driver supported by SQLAlchemy
 
-For a complete list of supported databases and drivers, see [SQLAlchemy Dialects documentation](https://docs.sqlalchemy.org/en/20/dialects/).
+For a complete list of supported databases and drivers, see
+[SQLAlchemy Dialects documentation](https://docs.sqlalchemy.org/en/20/dialects/).
+
+### Redis Client
+
+For Redis database testing:
+
+```bash
+pip install "qapytest[redis]"
+```
+
+Includes:
+- Redis client for caching and data store testing
+- Key-value operations
 
 ### Web Testing (Playwright)
 
@@ -77,18 +104,6 @@ playwright install
 ```
 
 This downloads the necessary browser binaries (Chromium, Firefox, WebKit) for Playwright to use.
-
-### Redis Client
-
-For Redis database testing:
-
-```bash
-pip install "qapytest[redis]"
-```
-
-Includes:
-- Redis client for caching and data store testing
-- Key-value operations
 
 ## Multiple Components
 
@@ -113,30 +128,7 @@ Install all optional dependencies:
 pip install "qapytest[all]"
 ```
 
-## Development Installation
-
-For contributors who want development dependencies:
-
-```bash
-pip install "qapytest[all]"
-pip install -e ".[dev]"
-```
-
-Development dependencies include:
-- Code linting (ruff)
-- Pre-commit hooks
-
 ## Compatibility
 
 - **Python**: 3.10, 3.11, 3.12, 3.13
 - **Platform**: Windows, macOS, Linux
-
-## Troubleshooting
-
-If you encounter import errors for missing modules, ensure you've installed the required optional dependencies for the features you're using.
-
-For example, if you get `ModuleNotFoundError: No module named 'httpx'`, install the http extra:
-
-```bash
-pip install "qapytest[http]"
-```
