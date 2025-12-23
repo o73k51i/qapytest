@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 📊 **JSON Report** - added `--report-json` option to generate structured JSON reports, enabling easy integration of test results with other tools and CI/CD pipelines.
 - 🎨 **Log Filter Indicator** - added a visual indicator for active filters in the HTML report log window.
 
+### Enhanced
+
+- 🔍 **HTML Report Search** - improved search functionality to support multiple search terms. You can now enter multiple keywords separated by spaces to filter tests that match all criteria (AND logic).
+
 ### Changed
 
 - 📦 **Modular Installation** - changed package installation structure. Clients (HTTP, SQL, Redis, Playwright) are now separated as optional dependencies, allowing installation of only necessary components.
