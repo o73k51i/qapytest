@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - 📊 **JSON Report** - added `--report-json` option to generate structured JSON reports, enabling easy integration of test results with other tools and CI/CD pipelines.
+- 🎨 **Log Filter Indicator** - added a visual indicator for active filters in the HTML report log window.
 
 ### Changed
 
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - 🐛 **HTTP Logging** - fixed display of query parameters in HTTP client logs. Parameters are now automatically decoded (unquoted) for better readability in the HTML report.
+- 🌐 **HTTP Port Logging** - fixed HttpClient logging to correctly display the port number in URLs when present.
 
 ## [0.3.6] - 2025-11-24
 
