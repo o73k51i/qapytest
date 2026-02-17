@@ -57,14 +57,14 @@ debugging needs.
 
 Complete documentation organized by topic:
 
-- [Quick Start Guide](docs/QuickStart.md)
-- [Installation Guide](docs/Installation.md)
-- [Core Tools](docs/CoreTools.md)
-- [Test Data Generation](docs/TestDataGeneration.md)
-- [Test Markers](docs/Markers.md)
-- [CLI Options](docs/CLI.md)
-- [Integration Clients](docs/Clients.md)
-- [Browser Automation](docs/BrowserAutomation.md)
+- [Quick Start Guide](https://github.com/o73k51i/qapytest/blob/main/docs/QuickStart.md)
+- [Installation Guide](https://github.com/o73k51i/qapytest/blob/main/docs/Installation.md)
+- [Core Tools](https://github.com/o73k51i/qapytest/blob/main/docs/CoreTools.md)
+- [Test Data Generation](https://github.com/o73k51i/qapytest/blob/main/docs/TestDataGeneration.md)
+- [Test Markers](https://github.com/o73k51i/qapytest/blob/main/docs/Markers.md)
+- [CLI Options](https://github.com/o73k51i/qapytest/blob/main/docs/CLI.md)
+- [Integration Clients](https://github.com/o73k51i/qapytest/blob/main/docs/Clients.md)
+- [Browser Automation](https://github.com/o73k51i/qapytest/blob/main/docs/BrowserAutomation.md)
 
 ## 📑 License
 
