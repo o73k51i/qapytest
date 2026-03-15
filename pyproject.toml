@@ -43,11 +43,21 @@ web = [
 redis = [
     "redis>=6.4.0",
 ]
+grpc = [
+    "grpcio>=1.62.0",
+    "grpcio-tools>=1.62.0",
+    "grpcio-reflection>=1.62.0",
+    "grpc-requests>=0.1.21",
+]
 all = [
     "httpx>=0.28.1",
     "sqlalchemy>=2.0.43",
     "pytest-playwright>=0.7.1",
     "redis>=6.4.0",
+    "grpcio>=1.62.0",
+    "grpcio-tools>=1.62.0",
+    "grpcio-reflection>=1.62.0",
+    "grpc-requests>=0.1.21",
 ]
 
 [project.urls]
