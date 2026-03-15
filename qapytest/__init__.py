@@ -11,6 +11,7 @@ from qapytest._soft_assert import soft_assert
 from qapytest._step import step
 
 if TYPE_CHECKING:
+    from qapytest._client_grpc import GrpcClient
     from qapytest._client_http import GraphQLClient, HttpClient
     from qapytest._redis import RedisClient
     from qapytest._sql import SqlClient
@@ -20,6 +21,7 @@ logging.getLogger("faker").setLevel(logging.WARNING)
 __all__ = [
     "Faker",
     "GraphQLClient",
+    "GrpcClient",
     "HttpClient",
     "RedisClient",
     "SqlClient",
@@ -35,6 +37,11 @@ def __getattr__(name: str) -> Any:  # noqa: ANN401
         from qapytest._client_http import GraphQLClient
 
         return GraphQLClient
+
+    if name == "GrpcClient":
+        from qapytest._client_grpc import GrpcClient
+
+        return GrpcClient
 
     if name == "HttpClient":
         from qapytest._client_http import HttpClient
