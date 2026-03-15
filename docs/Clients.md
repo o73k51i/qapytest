@@ -6,6 +6,7 @@ QaPyTest provides built-in clients for testing different types of services and A
 - [GraphQLClient](#graphqlclient)
 - [SqlClient](#sqlclient)
 - [RedisClient](#redisclient)
+- [GrpcClient](#grpcclient)
 - [Troubleshooting](#troubleshooting)
 
 
@@ -254,6 +255,66 @@ redis_client = RedisClient(
 )
 redis_client.set("user:123:status", "active", ex=3600)
 status = redis_client.get("user:123:status")
+```
+
+---
+
+## GrpcClient
+
+gRPC client for convenient interaction with gRPC APIs, with support for server reflection and compiled stubs, plus automatic structured logging.
+
+### Signature
+
+```python
+GrpcClient(
+    base_url: str,
+    pb2_modules: list[AnyType] | None = None,
+    timeout: float = 10.0,
+    name_logger: str = "GrpcClient",
+    enable_log: bool = True,
+    **kwargs,
+)
+```
+
+### Features
+
+- Support for both reflection (automatic discovery) and compiled python stubs
+- Automatic and structured logging for each request and response
+- Execution time tracking and error details logging
+- Context manager support and proper connection closing
+
+### Installation
+
+```bash
+pip install "qapytest[grpc]"
+```
+
+### Methods
+
+- `request(service: str, method: str, data: dict | list[dict] | None = None, **kwargs) → dict | Any`
+  - Perform a gRPC request with logging. Supports both unary and stream responses.
+- `close()`
+  - Close the underlying gRPC channel.
+
+### Example Usage
+
+```python
+from qapytest import GrpcClient
+
+# 1. With Reflection:
+client = GrpcClient(base_url="localhost:50051", enable_log=True)
+response = client.request("helloworld.Greeter", "SayHello", {"name": "QA"})
+print(response)
+
+# 2. Without Reflection (with compiled python stubs):
+import helloworld_pb2
+
+client_stub = GrpcClient(
+    base_url="localhost:50051",
+    pb2_modules=[helloworld_pb2],
+)
+response = client_stub.request("helloworld.Greeter", "SayHello", {"name": "QA"})
+print(response)
 ```
 
 ---
