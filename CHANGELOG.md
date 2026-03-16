@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-03-16
+
+### Added
+
+- 🚀 **gRPC Client Integration** - implemented `GrpcClient` with built-in logging and request handling for testing gRPC services.
+- 📦 **gRPC Dependencies** - added `grpc` as an optional dependency component.
+- 📚 **gRPC Documentation** - added comprehensive documentation and usage examples for the new `GrpcClient`.
+- 🛡️ **Report Template** - added a `<noscript>` warning in the HTML report template for platforms where JavaScript is disabled.
+
+### Changed
+
+- 🔗 **Documentation Links** - updated documentation links in the `README` to correctly point to GitHub pages.
+
 ## [0.4.0] - 2025-12-23
 
 ### Added
@@ -207,6 +220,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable attachment size limits
 - Professional report styling with responsive design
 
+[0.5.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.5.0
 [0.4.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.4.0
 [0.3.6]: https://github.com/o73k51i/qapytest/releases/tag/v0.3.6
 [0.3.5]: https://github.com/o73k51i/qapytest/releases/tag/v0.3.5

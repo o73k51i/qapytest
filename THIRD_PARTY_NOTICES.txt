@@ -42,3 +42,19 @@ It also makes use of the following third-party components:
 - pytest-playwright (Apache License 2.0)
   https://github.com/microsoft/playwright-pytest
   See licenses/pytest-playwright.LICENSE
+
+- grpcio (Apache License 2.0)
+  https://github.com/grpc/grpc
+  See licenses/grpcio.LICENSE
+
+- grpcio-tools (Apache License 2.0)
+  https://github.com/grpc/grpc
+  See licenses/grpcio-tools.LICENSE
+
+- grpcio-reflection (Apache License 2.0)
+  https://github.com/grpc/grpc
+  See licenses/grpcio-reflection.LICENSE
+
+- grpc-requests (Apache License 2.0)
+  https://github.com/wesky93/grpc_requests
+  See licenses/grpc-requests.LICENSE
