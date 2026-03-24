@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-03-24
+
+### Enhanced
+
+- 🛡️ **gRPC Client SSL/TLS Bypass** - Added `verify` parameter to `GrpcClient` (defaults to `True`). Setting `verify=False` automatically fetches and trusts self-signed certificates, providing an experience identical to `grpcurl -insecure`.
+- 🔌 **gRPC ALPN Subprotocols** - Added HTTP/2 (h2) ALPN declaration to the underlying certificate extraction socket to support strict Load Balancers and proxies like Envoy and Nginx.
+- 🌐 **gRPC Native DNS Resolver** - Built-in automatic fallback to `GRPC_DNS_RESOLVER=native` to resolve `c-ares` DNS resolution failures on macOS and VPN environments.
+
 ## [0.5.0] - 2026-03-16
 
 ### Added
@@ -220,6 +228,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable attachment size limits
 - Professional report styling with responsive design
 
+[0.5.1]: https://github.com/o73k51i/qapytest/releases/tag/v0.5.1
 [0.5.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.5.0
 [0.4.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.4.0
 [0.3.6]: https://github.com/o73k51i/qapytest/releases/tag/v0.3.6
