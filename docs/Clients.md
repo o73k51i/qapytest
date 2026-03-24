@@ -272,6 +272,7 @@ GrpcClient(
     timeout: float = 10.0,
     name_logger: str = "GrpcClient",
     enable_log: bool = True,
+    verify: bool = True,
     **kwargs,
 )
 ```
@@ -281,6 +282,8 @@ GrpcClient(
 - Support for both reflection (automatic discovery) and compiled python stubs
 - Automatic and structured logging for each request and response
 - Execution time tracking and error details logging
+- `verify=False` flag to automatically bypass SSL verification on test environments (similar to `grpcurl -insecure`)
+- Native DNS fallback automatically enabled under the hood for VPNs and macOS compatibility
 - Context manager support and proper connection closing
 
 ### Installation
@@ -301,16 +304,27 @@ pip install "qapytest[grpc]"
 ```python
 from qapytest import GrpcClient
 
-# 1. With Reflection:
-client = GrpcClient(base_url="localhost:50051", enable_log=True)
+# 1. Plaintext connection (without SSL, typically local development like `grpcurl -plaintext`)
+client_local = GrpcClient(
+    base_url="localhost:50051", 
+    ssl=False, 
+    enable_log=True
+)
+
+# 2. With SSL and Certificate Bypass (for test environments like `grpcurl -insecure`)
+client = GrpcClient(
+    base_url="test.lan:443",
+    verify=False,
+    enable_log=True
+)
 response = client.request("helloworld.Greeter", "SayHello", {"name": "QA"})
 print(response)
 
-# 2. Without Reflection (with compiled python stubs):
+# 3. Without Reflection (with compiled python stubs):
 import helloworld_pb2
 
 client_stub = GrpcClient(
-    base_url="localhost:50051",
+    base_url="prod.com:443", # verify=True by default for production
     pb2_modules=[helloworld_pb2],
 )
 response = client_stub.request("helloworld.Greeter", "SayHello", {"name": "QA"})

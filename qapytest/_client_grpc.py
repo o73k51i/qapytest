@@ -2,10 +2,15 @@
 
 import json
 import logging
+import os
+import socket
+import ssl
 import time
 from typing import Any
 
 from qapytest._config import AnyType
+
+os.environ.setdefault("GRPC_DNS_RESOLVER", "native")
 
 try:
     import grpc
@@ -14,6 +19,22 @@ try:
 except ImportError as e:
     msg = "The 'grpc' package is required to use gRPC client. Install it with: pip install \"qapytest[grpc]\""
     raise ImportError(msg) from e
+
+
+def _get_server_certificate(host: str, port: int) -> bytes:
+    """Fetch the server certificate without verification."""
+    context = ssl.create_default_context()
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
+    context.set_alpn_protocols(["h2"])
+    with (
+        socket.create_connection((host, port)) as sock,
+        context.wrap_socket(sock, server_hostname=host) as ssock,
+    ):
+        cert = ssock.getpeercert(binary_form=True)
+        if not cert:
+            raise ValueError(f"Could not get certificate for {host}:{port}")
+    return ssl.DER_cert_to_PEM_cert(cert).encode("utf-8")
 
 
 class GrpcClient:
@@ -31,6 +52,8 @@ class GrpcClient:
         timeout: Default timeout in seconds for all requests. Default is 10.0.
         name_logger: Name of the logger to use. Default is "GrpcClient".
         enable_log: Whether to log requests and responses. Default is True.
+        verify: Verify SSL certificates. If False, bypasses validation like
+                `grpcurl -insecure`. Default is True.
         **kwargs: Additional arguments passed to the underlying `grpc_requests.Client`.
 
     ---
@@ -57,6 +80,7 @@ class GrpcClient:
         timeout: float = 10.0,
         name_logger: str = "GrpcClient",
         enable_log: bool = True,
+        verify: bool = True,
         **kwargs,
     ) -> None:
         """Constructor for GrpcClient."""
@@ -67,6 +91,19 @@ class GrpcClient:
         self.base_url = base_url
         self.timeout = timeout
         self.enable_log = enable_log
+
+        if not verify:
+            parts = base_url.split(":")
+            host = parts[0]
+            port = int(parts[1]) if len(parts) > 1 else 443
+            try:
+                pem = _get_server_certificate(host, port)
+                kwargs["ssl"] = True
+                if "credentials" not in kwargs:
+                    kwargs["credentials"] = {}
+                kwargs["credentials"]["root_certificates"] = pem
+            except Exception as e:
+                self._logger.warning(f"Failed to fetch certificate for verify=False: {e}")
 
         if pb2_modules:
             service_descriptors = []
