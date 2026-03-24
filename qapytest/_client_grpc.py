@@ -26,6 +26,7 @@ def _get_server_certificate(host: str, port: int) -> bytes:
     context = ssl.create_default_context()
     context.check_hostname = False
     context.verify_mode = ssl.CERT_NONE
+    context.set_alpn_protocols(["h2"])
     with (
         socket.create_connection((host, port)) as sock,
         context.wrap_socket(sock, server_hostname=host) as ssock,
