@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 from faker import Faker
 
 from qapytest._attach import attach
+from qapytest._json_query import find_value, find_values
 from qapytest._json_validation import validate_json
 from qapytest._soft_assert import soft_assert
 from qapytest._step import step
@@ -26,6 +27,8 @@ __all__ = [
     "RedisClient",
     "SqlClient",
     "attach",
+    "find_value",
+    "find_values",
     "soft_assert",
     "step",
     "validate_json",
