@@ -6,6 +6,7 @@ QaPyTest provides essential tools for organizing tests, making assertions, and g
 - [Soft Assertion](#soft-assertion)
 - [Attach](#attach)
 - [JSON Schema Validation](#json-schema-validation)
+- [JSON Query](#json-query)
 
 
 ## Step
@@ -314,3 +315,105 @@ validate_json(data, schema=schema, strict=True)
   - `pattern` — regex pattern matching
   - `enum` — allowed values
   - `format` — email, date-time, uri, etc.
+
+---
+
+## JSON Query
+
+Navigate and extract values from nested JSON-like Python objects using a concise query syntax.
+
+### Functions
+
+```python
+find_values(obj, path) → list
+find_value(obj, path)  → Any | None
+```
+
+- `find_values` — returns **all** matches as a list (empty list when nothing matches)
+- `find_value` — returns the **first** match, or `None` when nothing matches
+
+### Path Syntax
+
+| Token           | Description                                   | Example            |
+| --------------- | --------------------------------------------- | ------------------ |
+| `.key`          | Navigate into a dict key                      | `.name`            |
+| `[]`            | Fan out over every element of a list          | `.users[]`         |
+| `[N]` / `[-N]`  | Pick element by index                         | `[0]`, `[-1]`      |
+| `[?key=value]`  | Filter — keep elements where key equals value | `[?status=active]` |
+| `[?key!=value]` | Filter — keep elements where key differs      | `[?role!=admin]`   |
+| `[?key]`        | Filter — keep elements where key is truthy    | `[?active]`        |
+| `..key`         | Recursive descent — collect key at any depth  | `..id`             |
+
+Filter values support JSON literals: `null`, `true`, `false`, integers, and floats.
+
+### Pipe Operators
+
+Append `|operator` to transform the result set:
+
+| Operator         | Description                                    |
+| ---------------- | ---------------------------------------------- |
+| `unique`         | Deduplicate values                             |
+| `count`          | Return count as a single-element list          |
+| `first`          | Keep only the first element                    |
+| `last`           | Keep only the last element                     |
+| `sort(key)`      | Sort ascending by a field                      |
+| `sort_desc(key)` | Sort descending by a field                     |
+| `min(key)`       | Keep the element with the smallest field value |
+| `max(key)`       | Keep the element with the largest field value  |
+
+### Usage
+
+```python
+from qapytest import find_value, find_values
+
+response = {
+    "users": [
+        {"id": 1, "name": "Alice", "role": "admin", "score": 95},
+        {"id": 2, "name": "Bob",   "role": "user",  "score": 72},
+        {"id": 3, "name": "Carol", "role": "user",  "score": 88},
+    ]
+}
+
+# Extract all IDs
+find_values(response, ".users[].id")               # [1, 2, 3]
+
+# First match only
+find_value(response, ".users[].name")              # 'Alice'
+
+# Index access
+find_value(response, ".users[-1].name")            # 'Carol'
+
+# Filter by equality
+find_values(response, ".users[?role=admin].name")  # ['Alice']
+
+# Recursive descent
+find_values(response, "..name")                    # ['Alice', 'Bob', 'Carol']
+
+# Sort ascending
+find_values(response, ".users[]|sort(score)")
+# [{'id': 2, ...score: 72}, {'id': 3, ...score: 88}, {'id': 1, ...score: 95}]
+
+# Top scorer
+find_value(response, ".users[]|max(score).name")   # 'Alice'
+
+# Count users with role=user
+find_value(response, ".users[?role=user]|count")   # 2
+```
+
+### Combining with Assertions
+
+```python
+from qapytest import find_value, find_values, soft_assert, step
+
+def test_order_api():
+    response = client.get("/orders").json()
+
+    with step("Validate active orders"):
+        active_ids = find_values(response, ".orders[?status=active].id")
+        soft_assert(len(active_ids) > 0, "At least one active order exists")
+
+    with step("Validate most recent order total"):
+        total = find_value(response, ".orders[-1].total")
+        soft_assert(total is not None, "Last order has a total")
+        soft_assert(total > 0, f"Total is positive: {total}")
+```
