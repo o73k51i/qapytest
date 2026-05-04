@@ -162,7 +162,8 @@ def _apply_pipe(nodes: list, pipe: str) -> list:
         fn, key = m.group(1), m.group(2)
 
         def _key_fn(item: JsonValue) -> Any:  # noqa: ANN401
-            v = find_values(item, key)
+            key_path = key if key.startswith(".") else f".{key}"
+            v = find_values(item, key_path)
             return v[0] if v else None
 
         if fn in ("sort", "sort_desc"):
@@ -204,9 +205,11 @@ def _tokenize(path: str) -> list[tuple[str, str | int | None, JsonValue]]:
             tokens.append(("index", int(idx), None))
         elif filter_key is not None:
             op_token = "filter_ne" if filter_op == "!=" else "filter"
-            tokens.append((op_token, filter_key, _parse_literal(filter_val)))
+            normalized = filter_key if filter_key.startswith(".") else f".{filter_key}"
+            tokens.append((op_token, normalized, _parse_literal(filter_val)))
         elif exist_key is not None:
-            tokens.append(("exist", exist_key, None))
+            normalized = exist_key if exist_key.startswith(".") else f".{exist_key}"
+            tokens.append(("exist", normalized, None))
         elif m.group(0) == "[]":
             tokens.append(("iter", None, None))
         elif nav_key is not None:
