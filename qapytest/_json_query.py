@@ -1,4 +1,4 @@
-"""Module providing lightweight JSONPath-like queries for navigating and extracting data from JSON-like Python objects."""  # noqa: E501
+"""Module providing lightweight query utilities for navigating and extracting data from JSON-like Python objects."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ def find_values(obj: JsonValue, path: str) -> list:
 
     Always returns a list — empty when nothing matches.
 
-    Supports a JSONPath-like path syntax:
+    Supports the following path syntax:
 
     - ``.key`` — navigate into a dict key.
     - ``[]`` — fan out over every element of a list.
