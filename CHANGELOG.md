@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-05-04
+
+### Added
+
+- 🔍 **JSON Query** - added `find_value` and `find_values` functions for navigating and extracting data from nested JSON-like Python objects using a concise query syntax.
+  - Key navigation (`.key`), index access (`[N]`, `[-N]`), fan-out (`[]`)
+  - Filters: equality (`[?key=value]`), inequality (`[?key!=value]`), existence (`[?key]`)
+  - Recursive descent (`..key`) — collect a field at any depth
+  - Pipe operators: `unique`, `count`, `first`, `last`, `sort(key)`, `sort_desc(key)`, `min(key)`, `max(key)`
+  - JSON literals in filters: `null`, `true`, `false`, integers, floats
+- 📚 **JSON Query Documentation** - added comprehensive documentation and usage examples for `find_value` / `find_values` in Core Tools.
+
 ## [0.5.1] - 2026-03-24
 
 ### Enhanced
@@ -228,6 +240,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable attachment size limits
 - Professional report styling with responsive design
 
+[0.6.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.6.0
 [0.5.1]: https://github.com/o73k51i/qapytest/releases/tag/v0.5.1
 [0.5.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.5.0
 [0.4.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.4.0
