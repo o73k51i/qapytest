@@ -20,9 +20,6 @@ class BaseHttpClient(Client):
     def __init__(
         self,
         base_url: str = "",
-        headers: dict[str, str] | None = None,
-        verify: bool = True,
-        timeout: float = 10.0,
         sensitive_headers: set[str] | None = None,
         sensitive_json_fields: set[str] | None = None,
         sensitive_text_patterns: list[str] | None = None,
@@ -32,7 +29,7 @@ class BaseHttpClient(Client):
         **kwargs,
     ) -> None:
         """Constructor for BaseHttpClient."""
-        super().__init__(base_url=base_url, headers=headers, verify=verify, timeout=timeout, **kwargs)
+        super().__init__(base_url=base_url, **kwargs)
         for name in ("httpx", "httpcore", "urllib3"):
             logging.getLogger(name).setLevel(logging.WARNING)
         self._logger = logging.getLogger(name_logger)

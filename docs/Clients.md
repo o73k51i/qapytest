@@ -19,16 +19,13 @@ HTTP client with automatic request/response logging and sensitive data masking.
 ```python
 HttpClient(
     base_url: str = "",
-    headers: dict[str, str] | None = None,
-    verify: bool = True,
-    timeout: float = 10.0,
     sensitive_headers: set[str] | None = None,
     sensitive_json_fields: set[str] | None = None,
     sensitive_text_patterns: list[str] | None = None,
     mask_sensitive_data: bool = True,
     name_logger: str = "HttpClient",
     enable_log: bool = True,
-    **kwargs,
+    **kwargs,  # e.g. headers=, timeout=, verify=, cookies=, proxies=
 ) → subclass of `httpx.Client`
 ```
 
@@ -53,8 +50,6 @@ from qapytest import HttpClient
 
 client = HttpClient(
     base_url="https://jsonplaceholder.typicode.com",
-    timeout=30,
-    headers={"Authorization": "Bearer token"},
     mask_sensitive_data=True,
     enable_log=True,
 )
@@ -71,16 +66,13 @@ Specialized client for GraphQL APIs with automatic logging and sensitive data ma
 ```python
 GraphQLClient(
     endpoint_url: str,
-    headers: dict[str, str] | None = None,
-    verify: bool = True,
-    timeout: float = 10.0,
     sensitive_headers: set[str] | None = None,
     sensitive_json_fields: set[str] | None = None,
     sensitive_text_patterns: list[str] | None = None,
     mask_sensitive_data: bool = True,
     name_logger: str = "GraphQLClient",
     enable_log: bool = True,
-    **kwargs,
+    **kwargs,  # e.g. headers=, timeout=, verify=, cookies=, proxies=
 ) # -> subclass of `httpx.Client`
 ```
 
@@ -109,9 +101,6 @@ from qapytest import GraphQLClient
 
 client = GraphQLClient(
     endpoint_url="https://spacex-production.up.railway.app/",
-    headers={"Authorization": "Bearer token"},
-    verify=True,
-    timeout=15.0,
     mask_sensitive_data=True,
     enable_log=True,
 )

@@ -22,11 +22,6 @@ class HttpClient(BaseHttpClient):
 
     Args:
         base_url: Base URL for all requests. Default is an empty string.
-        headers: Dictionary of headers for requests. Default is None.
-        verify: Whether to verify SSL certificates. Default is True.
-        timeout: Overall timeout for requests in seconds. Default is 10.0 seconds.
-        max_log_size: Maximum size in bytes for logged request/response bodies.
-                      Bodies larger than this will be truncated. Default is 1024 bytes.
         sensitive_headers: Set of header names to mask in logs.
                            If None, uses default sensitive headers.
         sensitive_json_fields: Set of JSON field names to mask in logs.
@@ -35,7 +30,7 @@ class HttpClient(BaseHttpClient):
         name_logger: Name of the logger to use for logging HTTP requests.
                      Default is "HttpClient".
         **kwargs: Additional arguments passed directly to the constructor of the base
-                 `httpx.Client` class (e.g., `headers`, `cookies`, `proxies`).
+                 `httpx.Client` class (e.g., `headers`, `timeout`, `verify`, `cookies`, `proxies`).
 
     ---
     ### Example usage:
@@ -64,9 +59,6 @@ class HttpClient(BaseHttpClient):
     def __init__(
         self,
         base_url: str = "",
-        headers: dict[str, str] | None = None,
-        verify: bool = True,
-        timeout: float = 10.0,
         sensitive_headers: set[str] | None = None,
         sensitive_json_fields: set[str] | None = None,
         sensitive_text_patterns: list[str] | None = None,
@@ -78,10 +70,6 @@ class HttpClient(BaseHttpClient):
 
         Args:
             base_url: Base URL for all requests. Default is an empty string.
-            headers: Dictionary of headers for requests. Default is None.
-            verify: Whether to verify SSL certificates. Default is True.
-            timeout: Overall timeout for requests in seconds.
-                     Default is 10.0 seconds.
             sensitive_headers: Set of header names to mask in logs. If None,
                                uses default sensitive headers.
             sensitive_json_fields: Set of JSON field names to mask in logs.
@@ -92,13 +80,11 @@ class HttpClient(BaseHttpClient):
                                  Default is True.
             name_logger: Name of the logger to use for logging HTTP requests.
                          Default is "HttpClient".
-            **kwargs: Standard arguments for the `httpx.Client` constructor.
+            **kwargs: Standard arguments for the `httpx.Client` constructor
+                      (e.g., `headers`, `timeout`, `verify`, `cookies`, `proxies`).
         """
         super().__init__(
             base_url=base_url,
-            headers=headers,
-            verify=verify,
-            timeout=timeout,
             sensitive_headers=sensitive_headers,
             sensitive_json_fields=sensitive_json_fields,
             sensitive_text_patterns=sensitive_text_patterns,
@@ -119,10 +105,6 @@ class GraphQLClient:
 
     Args:
         endpoint_url: The full URL of the GraphQL endpoint.
-        headers: Headers added to every request.
-        timeout: Overall timeout for responses in seconds.
-        max_log_size: Maximum size in bytes for logged request/response bodies.
-                      Default is 1024 bytes.
         sensitive_headers: Set of header names to mask in logs.
                            If None, uses default sensitive headers.
         sensitive_json_fields: Set of JSON field names to mask in logs.
@@ -131,7 +113,8 @@ class GraphQLClient:
                              Default is True.
         name_logger: Name of the logger to use for logging GraphQL requests.
                      Default is "GraphQLClient".
-        **kwargs: Other arguments passed directly to the `httpx.Client` constructor.
+        **kwargs: Other arguments passed directly to the `httpx.Client` constructor
+                  (e.g., `headers`, `timeout`, `verify`, `cookies`, `proxies`).
 
     ---
     ### Example usage:
@@ -176,9 +159,6 @@ class GraphQLClient:
     def __init__(
         self,
         endpoint_url: str,
-        headers: dict[str, str] | None = None,
-        verify: bool = True,
-        timeout: float = 10.0,
         sensitive_headers: set[str] | None = None,
         sensitive_json_fields: set[str] | None = None,
         sensitive_text_patterns: list[str] | None = None,
@@ -190,10 +170,6 @@ class GraphQLClient:
 
         Args:
             endpoint_url: The URL of the GraphQL endpoint.
-            headers: Dictionary of headers for requests. Default is None.
-            verify: Whether to verify SSL certificates. Default is True.
-            timeout: Overall timeout for requests in seconds.
-                     Default is 10.0 seconds.
             sensitive_headers: Set of header names to mask in logs. If None,
                                uses default sensitive headers.
             sensitive_json_fields: Set of JSON field names to mask in logs.
@@ -204,13 +180,11 @@ class GraphQLClient:
                                  Default is True.
             name_logger: Name of the logger to use for logging GraphQL requests.
                          Default is "GraphQLClient".
-            **kwargs: Standard arguments for the `httpx.Client` constructor.
+            **kwargs: Standard arguments for the `httpx.Client` constructor
+                      (e.g., `headers`, `timeout`, `verify`, `cookies`, `proxies`).
         """
         self._endpoint_url = endpoint_url
         self._client = BaseHttpClient(
-            headers=headers,
-            verify=verify,
-            timeout=timeout,
             sensitive_headers=sensitive_headers,
             sensitive_json_fields=sensitive_json_fields,
             sensitive_text_patterns=sensitive_text_patterns,

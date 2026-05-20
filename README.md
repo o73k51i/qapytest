@@ -44,6 +44,8 @@ debugging needs.
   data.
 - **JSON Schema validation:** function to validate API responses or test
   artifacts with support for soft-assert and strict mode.
+- **JSON Query:** lightweight query utilities (`find_value`, `find_values`) for
+  navigating and extracting data from nested JSON-like Python objects.
 - **Unicode support:** proper display of Unicode characters (Cyrillic, Arabic,
   Chinese, etc.) in terminal and HTML reports.
 
