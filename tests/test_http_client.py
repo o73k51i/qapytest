@@ -16,7 +16,7 @@ class TestHttpClient:
         client = HttpClient()
         assert isinstance(client, httpx.Client)
         assert client.base_url == ""
-        assert str(client.timeout) == "Timeout(timeout=10.0)"
+        assert str(client.timeout) == "Timeout(timeout=5.0)"
 
     def test_http_client_initialization_with_params(self) -> None:
         """Test HttpClient initialization with custom parameters."""
