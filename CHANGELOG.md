@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-05-20
+
+### Changed
+
+- 🌐 **HttpClient** - removed explicit `headers`, `verify`, and `timeout` parameters; they can now be passed directly via `**kwargs` for greater flexibility.
+- 📚 **Documentation** - updated HTTP client documentation to reflect the new `**kwargs` approach.
+
+### Fixed
+
+- 🧪 **Test updates** - updated test cases to align with the new `HttpClient` parameter interface.
+
 ## [0.6.0] - 2026-05-04
 
 ### Added
@@ -240,6 +251,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable attachment size limits
 - Professional report styling with responsive design
 
+[0.6.1]: https://github.com/o73k51i/qapytest/releases/tag/v0.6.1
 [0.6.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.6.0
 [0.5.1]: https://github.com/o73k51i/qapytest/releases/tag/v0.5.1
 [0.5.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.5.0
