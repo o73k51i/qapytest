@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 🌐 **HttpClient** - removed explicit `headers`, `verify`, and `timeout` parameters; they can now be passed directly via `**kwargs` for greater flexibility.
 - 📚 **Documentation** - updated HTTP client documentation to reflect the new `**kwargs` approach.
+- 📝 **README** - added JSON Query (`find_value`, `find_values`) to the key features section.
 
 ### Fixed
 
