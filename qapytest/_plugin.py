@@ -239,9 +239,10 @@ def pytest_fixture_setup(
     root_logger = logging.getLogger()
     root_logger.addHandler(log_capture)
 
-    yield  # Fixture actually executes here
-
-    root_logger.removeHandler(log_capture)
+    try:
+        yield  # Fixture actually executes here
+    finally:
+        root_logger.removeHandler(log_capture)
 
     if execution_log is not None:
         cfg.FIXTURE_STEPS_CACHE[fid] = copy.deepcopy(execution_log[start_len:])
