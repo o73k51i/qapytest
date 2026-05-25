@@ -237,7 +237,8 @@ class BaseHttpClient(Client):
                         self._logger.debug(f"Response body (raw bytes): {resp.content}")
                 elif "text/" in content_type or "application/xml" in content_type or "application/html" in content_type:
                     try:
-                        self._logger.debug(f"Response body (text): {resp.text}")
+                        sanitized_text = self._mask_sensitive_text_patterns(resp.text)
+                        self._logger.debug(f"Response body (text): {sanitized_text}")
                     except UnicodeDecodeError:
                         self._logger.debug(f"Response body (raw bytes): {resp.content}")
                 else:
