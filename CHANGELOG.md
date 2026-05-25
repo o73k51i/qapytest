@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - 2026-05-25
+
+### Added
+
+- 🪜 **Session-scoped fixture steps in reports** - Steps defined inside `session`, `module`, and `class` scoped fixtures now appear in the execution log of **every** test that uses those fixtures, including subsequent parametrized iterations where the fixture is served from cache. Pytest behavior is unchanged — fixtures still run only once; only the report is affected.
+- 📜 **Logs in reports for all parametrized tests** - The "Logs" button in the HTML report now appears in **every** parametrized iteration of a test when using `session`, `module`, or `class` scoped fixtures — not only the first one. Log entries are displayed in chronological order: fixture setup logs appear before the test body logs.
+
+### Fixed
+
+- 🔒 **HTTP client response masking** - Sensitive data patterns (tokens, passwords, API keys) are now masked in text-format HTTP response bodies, consistent with existing request body masking.
+
 ## [0.6.1] - 2026-05-20
 
 ### Changed
@@ -252,6 +263,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable attachment size limits
 - Professional report styling with responsive design
 
+[0.6.2]: https://github.com/o73k51i/qapytest/releases/tag/v0.6.2
 [0.6.1]: https://github.com/o73k51i/qapytest/releases/tag/v0.6.1
 [0.6.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.6.0
 [0.5.1]: https://github.com/o73k51i/qapytest/releases/tag/v0.5.1

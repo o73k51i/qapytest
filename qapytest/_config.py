@@ -14,7 +14,15 @@ CURRENT_LOG_CONTAINER_STACK: ContextVar[list[list[dict]] | None] = ContextVar(
     "_CURRENT_LOG_CONTAINER_STACK",
     default=None,
 )
-ATTACH_LIMIT_BYTES: int | None = None  # None = unlimited
+CURRENT_FRESH_FIXTURE_IDS: ContextVar[set[int] | None] = ContextVar(
+    "_CURRENT_FRESH_FIXTURE_IDS",
+    default=None,
+)
+FIXTURE_STEPS_CACHE: dict[int, list[dict]] = {}
+FIXTURE_LOG_SECTIONS_CACHE: dict[int, str] = {}
+FIXTURE_ORDER: dict[int, int] = {}
+FIXTURE_ORDER_SEQ: list[int] = [0]
+ATTACH_LIMIT_BYTES: int | None = None
 DEFAULT_IMAGE_MIME = "image/png"
 
 

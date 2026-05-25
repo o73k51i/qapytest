@@ -9,6 +9,9 @@ of Pytest.
 
 from __future__ import annotations
 
+import contextlib
+import copy
+import logging
 import shutil
 import warnings
 from collections.abc import Generator
@@ -19,6 +22,25 @@ import pytest
 from qapytest import _config as cfg
 from qapytest import _internal as utils
 from qapytest import _report as report
+
+_LOG_FIXTURE_FMT = logging.Formatter(
+    fmt="%(levelname)-8s %(name)s:%(filename)s:%(lineno)d %(message)s",
+)
+
+
+class _FixtureLogCapture(logging.Handler):
+    """Captures log records emitted during a non-function-scoped fixture's setup."""
+
+    def __init__(self) -> None:
+        super().__init__(level=logging.NOTSET)
+        self._lines: list[str] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        with contextlib.suppress(Exception):
+            self._lines.append(_LOG_FIXTURE_FMT.format(record))
+
+    def get_text(self) -> str:
+        return "\n".join(self._lines)
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -153,10 +175,83 @@ def pytest_unconfigure(config: pytest.Config) -> None:
         config.pluginmanager.unregister(json_plugin, name="_json_report_plugin")
 
 
-def pytest_runtest_setup(item: pytest.Item) -> None:
-    root_list = []
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_setup(item: pytest.Item) -> Generator[cfg.AnyType, None, None]:
+    root_list: list[dict] = []
     item._execution_log_token = cfg.CURRENT_EXECUTION_LOG.set(root_list)  # type: ignore[attr-defined]  # noqa: SLF001
     item._log_stack_token = cfg.CURRENT_LOG_CONTAINER_STACK.set([root_list])  # type: ignore[attr-defined]  # noqa: SLF001
+    item._fresh_fixture_ids_token = cfg.CURRENT_FRESH_FIXTURE_IDS.set(set())  # type: ignore[attr-defined]  # noqa: SLF001
+
+    yield
+
+    try:
+        execution_log = cfg.CURRENT_EXECUTION_LOG.get()
+        fresh_ids = cfg.CURRENT_FRESH_FIXTURE_IDS.get()
+        if execution_log is not None and fresh_ids is not None:
+            fixture_manager = getattr(item.session, "_fixturemanager", None)
+            fixture_info = getattr(item, "_fixtureinfo", None)
+            if fixture_manager is not None and fixture_info is not None:
+                cached_fids: list[int] = []
+                seen_ids: set[int] = set()
+                for fname in fixture_info.names_closure:
+                    fixturedefs = fixture_manager.getfixturedefs(fname, item)
+                    if not fixturedefs:
+                        continue
+                    fixturedef = fixturedefs[-1]
+                    fid = id(fixturedef)
+                    if fid in seen_ids:
+                        continue
+                    seen_ids.add(fid)
+                    scope = getattr(fixturedef, "scope", "function")
+                    if scope == "function":
+                        continue
+                    if fid not in fresh_ids and fid in cfg.FIXTURE_STEPS_CACHE:
+                        cached_fids.append(fid)
+                # Sort by original execution order so dependencies appear before dependents
+                cached_fids.sort(key=lambda fid: cfg.FIXTURE_ORDER.get(fid, 0))
+                steps_to_prepend: list[dict] = []
+                for fid in cached_fids:
+                    steps_to_prepend.extend(cfg.FIXTURE_STEPS_CACHE[fid])
+                execution_log[:0] = steps_to_prepend
+    except Exception:  # noqa: S110
+        pass
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_fixture_setup(
+    fixturedef: pytest.FixtureDef,  # type: ignore[type-arg]
+    request: pytest.FixtureRequest,  # noqa: ARG001
+) -> Generator[cfg.AnyType, None, None]:
+    scope = getattr(fixturedef, "scope", "function")
+    if scope == "function":
+        yield
+        return
+
+    execution_log = cfg.CURRENT_EXECUTION_LOG.get()
+    start_len = len(execution_log) if execution_log is not None else 0
+    fid = id(fixturedef)
+
+    fresh_ids = cfg.CURRENT_FRESH_FIXTURE_IDS.get()
+    if fresh_ids is not None:
+        fresh_ids.add(fid)
+
+    log_capture = _FixtureLogCapture()
+    root_logger = logging.getLogger()
+    root_logger.addHandler(log_capture)
+
+    try:
+        yield  # Fixture actually executes here
+    finally:
+        root_logger.removeHandler(log_capture)
+
+    if execution_log is not None:
+        cfg.FIXTURE_STEPS_CACHE[fid] = copy.deepcopy(execution_log[start_len:])
+        cfg.FIXTURE_ORDER[fid] = cfg.FIXTURE_ORDER_SEQ[0]
+        cfg.FIXTURE_ORDER_SEQ[0] += 1
+
+    log_text = log_capture.get_text()
+    if log_text:
+        cfg.FIXTURE_LOG_SECTIONS_CACHE[fid] = log_text
 
 
 def pytest_runtest_teardown(item: pytest.Item, nextitem: pytest.Item | None) -> None:  # noqa: ARG001
@@ -166,12 +261,61 @@ def pytest_runtest_teardown(item: pytest.Item, nextitem: pytest.Item | None) -> 
     stack_token = getattr(item, "_log_stack_token", None)
     if stack_token:
         cfg.CURRENT_LOG_CONTAINER_STACK.reset(stack_token)
+    fresh_ids_token = getattr(item, "_fresh_fixture_ids_token", None)
+    if fresh_ids_token:
+        cfg.CURRENT_FRESH_FIXTURE_IDS.reset(fresh_ids_token)
 
 
-@pytest.hookimpl(hookwrapper=True)
+@pytest.hookimpl(hookwrapper=True, trylast=True)
 def pytest_runtest_makereport(item: pytest.Item, call: cfg.AnyType) -> Generator[cfg.AnyType, None, None]:
     outcome = yield
     report: pytest.TestReport = outcome.get_result()  # type: ignore
+
+    # For cached non-function-scoped fixtures, inject their captured log sections
+    # so the Logs button appears in all parametrized tests, not only the first one.
+    if report.when in ("setup", "call"):
+        try:
+            fresh_ids = cfg.CURRENT_FRESH_FIXTURE_IDS.get()
+            if fresh_ids is not None:
+                fixture_manager = getattr(item.session, "_fixturemanager", None)
+                fixture_info = getattr(item, "_fixtureinfo", None)
+                if fixture_manager is not None and fixture_info is not None:
+                    cached_log_fids: list[int] = []
+                    seen_ids: set[int] = set()
+                    for fname in fixture_info.names_closure:
+                        fixturedefs = fixture_manager.getfixturedefs(fname, item)
+                        if not fixturedefs:
+                            continue
+                        fixturedef = fixturedefs[-1]
+                        fid = id(fixturedef)
+                        if fid in seen_ids:
+                            continue
+                        seen_ids.add(fid)
+                        scope = getattr(fixturedef, "scope", "function")
+                        if scope == "function":
+                            continue
+                        if fid not in fresh_ids and fid in cfg.FIXTURE_LOG_SECTIONS_CACHE:
+                            cached_log_fids.append(fid)
+                    cached_log_fids.sort(key=lambda fid: cfg.FIXTURE_ORDER.get(fid, 0))
+                    log_parts = [cfg.FIXTURE_LOG_SECTIONS_CACHE[fid] for fid in cached_log_fids]
+                    if log_parts:
+                        combined = "\n".join(log_parts)
+                        # Insert BEFORE any existing "Captured log" sections so that
+                        # cached-fixture logs (which ran earlier in time) appear first.
+                        insert_at = next(
+                            (
+                                i
+                                for i, (name, _) in enumerate(report.sections)
+                                if name.lower().startswith(("caplog", "captured log"))
+                            ),
+                            None,
+                        )
+                        if insert_at is not None:
+                            report.sections.insert(insert_at, ("Captured log setup", combined))
+                        else:
+                            report.sections.append(("Captured log setup", combined))
+        except Exception:  # noqa: S110
+            pass
 
     if not item.config.getoption("disable_unicode"):
         if hasattr(report, "nodeid") and report.nodeid and "\\" in report.nodeid:
