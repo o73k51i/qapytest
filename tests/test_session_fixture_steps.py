@@ -56,7 +56,7 @@ class TestSessionScopedFixtureSteps:
             def test_example(base_resource, x):
                 pass
         """)
-        result = pytester.runpytest()
+        result = pytester.runpytest("-p", "no:playwright")
         result.assert_outcomes(passed=2)
 
     def test_steps_appear_in_subsequent_parametrized_tests(self, pytester: pytest.Pytester) -> None:
@@ -81,7 +81,7 @@ class TestSessionScopedFixtureSteps:
                         f"test_example[{i+1}] missing 'Create base resource' step, got: {messages}"
                     )
         """)
-        result = pytester.runpytest("-v")
+        result = pytester.runpytest("-v", "-p", "no:playwright")
         result.assert_outcomes(passed=4)
 
     def test_dependency_steps_in_correct_order(self, pytester: pytest.Pytester) -> None:
@@ -106,7 +106,7 @@ class TestSessionScopedFixtureSteps:
                         f"test_example[{i+1}] wrong order: {messages}"
                     )
         """)
-        result = pytester.runpytest("-v")
+        result = pytester.runpytest("-v", "-p", "no:playwright")
         result.assert_outcomes(passed=3)
 
     def test_function_scoped_fixture_unaffected(self, pytester: pytest.Pytester) -> None:
@@ -131,7 +131,7 @@ class TestSessionScopedFixtureSteps:
                         f"test_example[{i+1}]: expected exactly 1 step, got {messages}"
                     )
         """)
-        result = pytester.runpytest("-v")
+        result = pytester.runpytest("-v", "-p", "no:playwright")
         result.assert_outcomes(passed=4)
 
     def test_session_fixture_runs_exactly_once(self, pytester: pytest.Pytester) -> None:
@@ -153,7 +153,7 @@ class TestSessionScopedFixtureSteps:
             def test_fixture_ran_once():
                 assert len(RUN_COUNT) == 1, f"Expected 1 run, got {len(RUN_COUNT)}"
         """)
-        result = pytester.runpytest("-v")
+        result = pytester.runpytest("-v", "-p", "no:playwright")
         result.assert_outcomes(passed=4)
 
 
@@ -182,5 +182,5 @@ class TestModuleScopedFixtureSteps:
                         f"test_example[{i+1}] missing module step, got: {messages}"
                     )
         """)
-        result = pytester.runpytest("-v")
+        result = pytester.runpytest("-v", "-p", "no:playwright")
         result.assert_outcomes(passed=4)
