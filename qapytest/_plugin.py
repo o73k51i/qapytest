@@ -217,7 +217,8 @@ def pytest_fixture_setup(
 
     if execution_log is not None:
         cfg.FIXTURE_STEPS_CACHE[fid] = list(execution_log[start_len:])
-        cfg.FIXTURE_ORDER[fid] = len(cfg.FIXTURE_ORDER)
+        cfg.FIXTURE_ORDER[fid] = cfg.FIXTURE_ORDER_SEQ[0]
+        cfg.FIXTURE_ORDER_SEQ[0] += 1
 
 
 def pytest_runtest_teardown(item: pytest.Item, nextitem: pytest.Item | None) -> None:  # noqa: ARG001
