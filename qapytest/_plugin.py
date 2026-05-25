@@ -153,10 +153,71 @@ def pytest_unconfigure(config: pytest.Config) -> None:
         config.pluginmanager.unregister(json_plugin, name="_json_report_plugin")
 
 
-def pytest_runtest_setup(item: pytest.Item) -> None:
-    root_list = []
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_setup(item: pytest.Item) -> Generator[cfg.AnyType, None, None]:
+    root_list: list[dict] = []
     item._execution_log_token = cfg.CURRENT_EXECUTION_LOG.set(root_list)  # type: ignore[attr-defined]  # noqa: SLF001
     item._log_stack_token = cfg.CURRENT_LOG_CONTAINER_STACK.set([root_list])  # type: ignore[attr-defined]  # noqa: SLF001
+    item._fresh_fixture_ids_token = cfg.CURRENT_FRESH_FIXTURE_IDS.set(set())  # type: ignore[attr-defined]  # noqa: SLF001
+
+    yield
+
+    try:
+        execution_log = cfg.CURRENT_EXECUTION_LOG.get()
+        fresh_ids = cfg.CURRENT_FRESH_FIXTURE_IDS.get()
+        if execution_log is not None and fresh_ids is not None:
+            fixture_manager = getattr(item.session, "_fixturemanager", None)
+            fixture_info = getattr(item, "_fixtureinfo", None)
+            if fixture_manager is not None and fixture_info is not None:
+                cached_fids: list[int] = []
+                seen_ids: set[int] = set()
+                for fname in fixture_info.names_closure:
+                    fixturedefs = fixture_manager.getfixturedefs(fname, item)
+                    if not fixturedefs:
+                        continue
+                    fixturedef = fixturedefs[-1]
+                    fid = id(fixturedef)
+                    if fid in seen_ids:
+                        continue
+                    seen_ids.add(fid)
+                    scope = getattr(fixturedef, "scope", "function")
+                    if scope == "function":
+                        continue
+                    if fid not in fresh_ids and fid in cfg.FIXTURE_STEPS_CACHE:
+                        cached_fids.append(fid)
+                # Sort by original execution order so dependencies appear before dependents
+                cached_fids.sort(key=lambda fid: cfg.FIXTURE_ORDER.get(fid, 0))
+                steps_to_prepend: list[dict] = []
+                for fid in cached_fids:
+                    steps_to_prepend.extend(cfg.FIXTURE_STEPS_CACHE[fid])
+                execution_log[:0] = steps_to_prepend
+    except Exception:  # noqa: S110
+        pass
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_fixture_setup(
+    fixturedef: pytest.FixtureDef,  # type: ignore[type-arg]
+    request: pytest.FixtureRequest,  # noqa: ARG001
+) -> Generator[cfg.AnyType, None, None]:
+    scope = getattr(fixturedef, "scope", "function")
+    if scope == "function":
+        yield
+        return
+
+    execution_log = cfg.CURRENT_EXECUTION_LOG.get()
+    start_len = len(execution_log) if execution_log is not None else 0
+    fid = id(fixturedef)
+
+    fresh_ids = cfg.CURRENT_FRESH_FIXTURE_IDS.get()
+    if fresh_ids is not None:
+        fresh_ids.add(fid)
+
+    yield  # Fixture actually executes here
+
+    if execution_log is not None:
+        cfg.FIXTURE_STEPS_CACHE[fid] = list(execution_log[start_len:])
+        cfg.FIXTURE_ORDER[fid] = len(cfg.FIXTURE_ORDER)
 
 
 def pytest_runtest_teardown(item: pytest.Item, nextitem: pytest.Item | None) -> None:  # noqa: ARG001
@@ -166,6 +227,9 @@ def pytest_runtest_teardown(item: pytest.Item, nextitem: pytest.Item | None) -> 
     stack_token = getattr(item, "_log_stack_token", None)
     if stack_token:
         cfg.CURRENT_LOG_CONTAINER_STACK.reset(stack_token)
+    fresh_ids_token = getattr(item, "_fresh_fixture_ids_token", None)
+    if fresh_ids_token:
+        cfg.CURRENT_FRESH_FIXTURE_IDS.reset(fresh_ids_token)
 
 
 @pytest.hookimpl(hookwrapper=True)
