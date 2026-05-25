@@ -9,6 +9,7 @@ of Pytest.
 
 from __future__ import annotations
 
+import copy
 import shutil
 import warnings
 from collections.abc import Generator
@@ -216,7 +217,7 @@ def pytest_fixture_setup(
     yield  # Fixture actually executes here
 
     if execution_log is not None:
-        cfg.FIXTURE_STEPS_CACHE[fid] = list(execution_log[start_len:])
+        cfg.FIXTURE_STEPS_CACHE[fid] = copy.deepcopy(execution_log[start_len:])
         cfg.FIXTURE_ORDER[fid] = cfg.FIXTURE_ORDER_SEQ[0]
         cfg.FIXTURE_ORDER_SEQ[0] += 1
 
