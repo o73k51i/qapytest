@@ -19,6 +19,7 @@ CURRENT_FRESH_FIXTURE_IDS: ContextVar[set[int] | None] = ContextVar(
     default=None,
 )
 FIXTURE_STEPS_CACHE: dict[int, list[dict]] = {}
+FIXTURE_LOG_SECTIONS_CACHE: dict[int, str] = {}
 FIXTURE_ORDER: dict[int, int] = {}
 FIXTURE_ORDER_SEQ: list[int] = [0]
 ATTACH_LIMIT_BYTES: int | None = None
