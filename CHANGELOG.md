@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.3] - 2026-06-11
+
+### Fixed
+
+- 🎯 **XFAIL status reporting** - fixed incorrect XPASS status for tests marked with `@pytest.mark.xfail` that contain `soft_assert` failures. These tests are now correctly reported as XFAIL (expected failure) instead of XPASS (unexpected pass).
+- 📊 **Clean report output** - improved longrepr in HTML/JSON reports for xfail tests by removing pytest-playwright hookwrapper noise. Reports now show clean assertion summaries instead of double tracebacks.
+- 🧪 **Test coverage** - added comprehensive integration tests (28 test cases) covering xfail behavior with soft assertions, strict mode, skip markers, and edge cases.
+
 ## [0.6.2] - 2026-05-25
 
 ### Added
@@ -263,6 +271,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable attachment size limits
 - Professional report styling with responsive design
 
+[0.6.3]: https://github.com/o73k51i/qapytest/releases/tag/v0.6.3
 [0.6.2]: https://github.com/o73k51i/qapytest/releases/tag/v0.6.2
 [0.6.1]: https://github.com/o73k51i/qapytest/releases/tag/v0.6.1
 [0.6.0]: https://github.com/o73k51i/qapytest/releases/tag/v0.6.0
