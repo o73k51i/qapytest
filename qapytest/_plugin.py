@@ -254,6 +254,30 @@ def pytest_fixture_setup(
         cfg.FIXTURE_LOG_SECTIONS_CACHE[fid] = log_text
 
 
+@pytest.hookimpl(hookwrapper=True, trylast=True)
+def pytest_runtest_call(item: pytest.Item) -> Generator[cfg.AnyType, None, None]:
+    """Hook wrapper around the test call phase.
+
+    This ensures soft_assert failures are properly converted to real failures
+    for tests marked with xfail, allowing pytest to correctly identify xfail vs xpass.
+    """
+    outcome = yield
+
+    # After test execution, check if there are soft_assert failures
+    execution_log = cfg.CURRENT_EXECUTION_LOG.get()
+    if not execution_log or not utils.has_failures_in_log(execution_log):
+        return
+
+    # If test has xfail marker and soft_assert failures, raise AssertionError
+    # so pytest correctly identifies it as xfail (not xpass)
+    if not (hasattr(item, "get_closest_marker") and item.get_closest_marker("xfail")):
+        return
+
+    # Check if test didn't already fail with a real exception
+    if hasattr(outcome, "excinfo") and outcome.excinfo is None:  # type: ignore[attr-defined]
+        outcome.force_exception(AssertionError("One or more soft assertions failed"))  # type: ignore[attr-defined]
+
+
 def pytest_runtest_teardown(item: pytest.Item, nextitem: pytest.Item | None) -> None:  # noqa: ARG001
     log_token = getattr(item, "_execution_log_token", None)
     if log_token:
@@ -322,19 +346,21 @@ def pytest_runtest_makereport(item: pytest.Item, call: cfg.AnyType) -> Generator
             report.nodeid = utils.decode_unicode_escapes(report.nodeid)
         if hasattr(report, "location") and getattr(report, "location", None):
             try:
-                path, lineno, domain = report.location  # type: ignore[misc]
-                if isinstance(domain, str) and "\\" in domain:
-                    report.location = (path, lineno, utils.decode_unicode_escapes(domain))
+                location = report.location
+                if location is not None and len(location) == 3:  # type: ignore[arg-type]
+                    path, lineno, domain = location  # type: ignore[misc]
+                    if isinstance(domain, str) and "\\" in domain:
+                        report.location = (path, lineno, utils.decode_unicode_escapes(domain))
             except Exception:  # noqa: S110
                 pass
 
     try:
         if call and getattr(call, "excinfo", None) is not None and call.excinfo.type is not None:
-            report._exc_class_name = getattr(  # noqa: SLF001 # type: ignore
+            report._exc_class_name = getattr(  # type: ignore[attr-defined]  # noqa: SLF001
                 call.excinfo.type,
                 "__name__",
                 str(call.excinfo.type),
-            )  # type: ignore[attr-defined]
+            )
         else:
             report._exc_class_name = None  # type: ignore[attr-defined]  # noqa: SLF001
     except Exception:
@@ -345,13 +371,12 @@ def pytest_runtest_makereport(item: pytest.Item, call: cfg.AnyType) -> Generator
         report.execution_log = list(execution_log)  # type: ignore[attr-defined]
         report.user_properties.append(("execution_log", report.execution_log))  # type: ignore[attr-defined]
 
-        if report.when == "call" and report.outcome == "passed" and utils.has_failures_in_log(report.execution_log):
+        if report.when == "call" and report.outcome == "passed" and utils.has_failures_in_log(report.execution_log):  # type: ignore[attr-defined]
             report._softfailed = True  # type: ignore[attr-defined]  # noqa: SLF001
-            report._soft_assert_only = True  # type: ignore[attr-defined]  # noqa: SLF001  # Marker for soft assertion failures
-            if getattr(report, "wasxfail", None):
-                report.outcome = "skipped"
-            else:
-                report.outcome = "failed"
+            report._soft_assert_only = True  # type: ignore[attr-defined]  # noqa: SLF001
+            # Always set outcome to "failed" for soft_assert failures, even with xfail marker
+            # This allows pytest to properly detect xfail (expected failure) vs xpass (unexpected success)
+            report.outcome = "failed"
 
             header = "One or more assertions failed."
             error_summary_lines = utils.generate_terminal_summary(report.execution_log)  # type: ignore[attr-defined]
