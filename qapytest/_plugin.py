@@ -275,7 +275,10 @@ def pytest_runtest_call(item: pytest.Item) -> Generator[cfg.AnyType, None, None]
 
     # Check if test didn't already fail with a real exception
     if hasattr(outcome, "excinfo") and outcome.excinfo is None:  # type: ignore[attr-defined]
-        outcome.force_exception(AssertionError("One or more soft assertions failed"))  # type: ignore[attr-defined]
+        # Create exception with marker attribute for cleaner reporting
+        exc = AssertionError("One or more soft assertions failed")
+        exc._qapytest_xfail_marker = True  # type: ignore[attr-defined]  # noqa: SLF001
+        outcome.force_exception(exc)  # type: ignore[attr-defined]
 
 
 def pytest_runtest_teardown(item: pytest.Item, nextitem: pytest.Item | None) -> None:  # noqa: ARG001
@@ -382,6 +385,26 @@ def pytest_runtest_makereport(item: pytest.Item, call: cfg.AnyType) -> Generator
             error_summary_lines = utils.generate_terminal_summary(report.execution_log)  # type: ignore[attr-defined]
             full_summary = [header, *error_summary_lines]
             report.longrepr = "\n".join(full_summary)
+
+        # Clean up longrepr for xfail tests with qapytest-generated exceptions
+        # to avoid showing pytest-playwright hookwrapper noise
+        if (
+            report.when == "call"
+            and report.outcome == "failed"
+            and hasattr(item, "get_closest_marker")
+            and item.get_closest_marker("xfail")
+            and utils.has_failures_in_log(report.execution_log)  # type: ignore[attr-defined]
+            and call
+            and getattr(call, "excinfo", None) is not None
+        ):
+            # Check if this is our exception (marked in pytest_runtest_call)
+            exc_value = call.excinfo.value
+            if hasattr(exc_value, "_qapytest_xfail_marker"):
+                # Replace the playwright-wrapped traceback with clean assertion summary
+                header = "One or more assertions failed."
+                error_summary_lines = utils.generate_terminal_summary(report.execution_log)  # type: ignore[attr-defined]
+                full_summary = [header, *error_summary_lines]
+                report.longrepr = "\n".join(full_summary)
 
     if (
         not item.config.getoption("disable_unicode")
