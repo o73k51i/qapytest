@@ -1,6 +1,6 @@
 [project]
 name = "qapytest"
-version = "0.6.2"
+version = "0.6.3"
 description = "A powerful testing framework based on pytest, specifically designed for QA engineers"
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
@@ -100,7 +100,7 @@ quote-style = "double"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/test_*.py" = [
-    "ANN201", "S101", "D", "PT015", "B011",
+    "ANN001", "ANN201", "S101", "D", "PT015", "B011",
 ]
 
 [build-system]
