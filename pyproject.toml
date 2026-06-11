@@ -100,7 +100,7 @@ quote-style = "double"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/test_*.py" = [
-    "ANN201", "S101", "D", "PT015", "B011",
+    "ANN001", "ANN201", "S101", "D", "PT015", "B011",
 ]
 
 [build-system]
